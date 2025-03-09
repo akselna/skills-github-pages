@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grafisk metode for lineær programmering med utregninger</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+    }
+    svg {
+      border: 1px solid black;
+      margin-top: 20px;
+    }
+    #instruction {
+      font-size: 18px;
+      margin: 20px;
+      max-width: 600px;
+      display: inline-block;
+    }
+    #next-button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .calculation {
+      font-size: 14px;
+      fill: #000;
+      text-anchor: middle;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Grafisk metode for lineær programmering med utregninger</h1>
+  <p id="instruction">Trykk "Neste" for å starte animasjonen.</p>
+  <svg id="graph" width="600" height="600"></svg>
+  <br>
+  <button id="next-button">Neste</button>
+
+  <script>
+    // Velg SVG-elementet
+    const svg = d3.select('#graph');
+    const width = 600;
+    const height = 600;
+    const margin = { top: 20, right: 20, bottom: 30, left: 40 };
+
+    // Definer skalaer
+    const xScale = d3.scaleLinear()
+      .domain([0, 10])
+      .range([margin.left, width - margin.right]);
+    const yScale = d3.scaleLinear()
+      .domain([0, 10])
+      .range([height - margin.bottom, margin.top]);
+
+    // Tegn akser
+    svg.append('g')
+      .attr('transform', `translate(0, ${height - margin.bottom})`)
+      .call(d3.axisBottom(xScale).ticks(10));
+    svg.append('g')
+      .attr('transform', `translate(${margin.left}, 0)`)
+      .call(d3.axisLeft(yScale).ticks(10));
+
+    // Begrensninger
+    const constraints = [
+      { name: '2x₁ + x₂ ≤ 8', x1: 0, y1: 8, x2: 4, y2: 0 }, // 2x₁ + x₂ = 8
+      { name: 'x₁ + 2x₂ ≤ 10', x1: 0, y1: 5, x2: 10, y2: 0 }  // x₁ + 2x₂ = 10
+    ];
+
+    // Hjørnepunkter (med gyldighetsstatus)
+    const cornerPoints = [
+      { x: 0, y: 0, legal: true },
+      { x: 0, y: 5, legal: true },
+      { x: 0, y: 8, legal: false },
+      { x: 2, y: 4, legal: true }, // Skjæringspunkt (2, 4)
+      { x: 4, y: 0, legal: true },
+      { x: 10, y: 0, legal: false }
+    ];
+
+    // Gyldige hjørnepunkter for mulighetsområdet
+    const feasiblePoints = [
+      [0, 0], [0, 5], [2, 4], [4, 0]
+    ];
+
+    // Trinnene
+    let currentStep = 0;
+    const steps = [
+      // Trinn 0: Start
+      () => {
+        d3.select('#instruction').text('Trykk "Neste" for å starte animasjonen.');
+      },
+
+      // Trinn 1: Første begrensning, sett x₁ = 0
+      () => {
+        d3.select('#instruction').text('Vi starter med begrensningen 2x₁ + x₂ ≤ 8. Setter x₁ = 0:');
+        const calc = svg.append('text')
+          .attr('class', 'calculation')
+          .attr('x', xScale(2))
+          .attr('y', yScale(9))
+          .text('2(0) + x₂ = 8')
+          .transition().duration(1000).attr('opacity', 1)
+          .transition().duration(1000).text('x₂ = 8')
+          .transition().duration(1000).remove();
+        svg.append('circle')
+          .attr('cx', xScale(0))
+          .attr('cy', yScale(8))
+          .attr('r', 5)
+          .attr('fill', 'blue');
+      },
+
+      // Trinn 2: Første begrensning, sett x₂ = 0
+      () => {
+        d3.select('#instruction').text('Nå setter vi x₂ = 0 i 2x₁ + x₂ = 8:');
+        const calc = svg.append('text')
+          .attr('class', 'calculation')
+          .attr('x', xScale(6))
+          .attr('y', yScale(1))
+          .text('2x₁ + 0 = 8')
+          .transition().duration(1000).attr('opacity', 1)
+          .transition().duration(1000).text('2x₁ = 8')
+          .transition().duration(1000).text('x₁ = 4')
+          .transition().duration(1000).remove();
+        svg.append('circle')
+          .attr('cx', xScale(4))
+          .attr('cy', yScale(0))
+          .attr('r', 5)
+          .attr('fill', 'blue');
+        svg.append('path')
+          .attr('d', d3.line()([
+            [xScale(0), yScale(8)],
+            [xScale(4), yScale(0)]
+          ]))
+          .attr('stroke', 'blue')
+          .attr('stroke-width', 2);
+      },
+
+      // Trinn 3: Andre begrensning, sett x₁ = 0
+      () => {
+        d3.select('#instruction').text('Neste begrensning: x₁ + 2x₂ ≤ 10. Setter x₁ = 0:');
+        const calc = svg.append('text')
+          .attr('class', 'calculation')
+          .attr('x', xScale(2))
+          .attr('y', yScale(6))
+          .text('0 + 2x₂ = 10')
+          .transition().duration(1000).attr('opacity', 1)
+          .transition().duration(1000).text('2x₂ = 10')
+          .transition().duration(1000).text('x₂ = 5')
+          .transition().duration(1000).remove();
+        svg.append('circle')
+          .attr('cx', xScale(0))
+          .attr('cy', yScale(5))
+          .attr('r', 5)
+          .attr('fill', 'blue');
+      },
+
+      // Trinn 4: Andre begrensning, sett x₂ = 0
+      () => {
+        d3.select('#instruction').text('Setter x₂ = 0 i x₁ + 2x₂ = 10:');
+        const calc = svg.append('text')
+          .attr('class', 'calculation')
+          .attr('x', xScale(8))
+          .attr('y', yScale(1))
+          .text('x₁ + 2(0) = 10')
+          .transition().duration(1000).attr('opacity', 1)
+          .transition().duration(1000).text('x₁ = 10')
+          .transition().duration(1000).remove();
+        svg.append('circle')
+          .attr('cx', xScale(10))
+          .attr('cy', yScale(0))
+          .attr('r', 5)
+          .attr('fill', 'blue');
+        svg.append('path')
+          .attr('d', d3.line()([
+            [xScale(0), yScale(5)],
+            [xScale(10), yScale(0)]
+          ]))
+          .attr('stroke', 'blue')
+          .attr('stroke-width', 2);
+      },
+
+      // Trinn 5: Finn skjæringspunktet (2, 4)
+      () => {
+        d3.select('#instruction').text('Finn skjæringspunktet mellom 2x₁ + x₂ = 8 og x₁ + 2x₂ = 10:');
+        const calc = svg.append('text')
+          .attr('class', 'calculation')
+          .attr('x', xScale(5))
+          .attr('y', yScale(7))
+          .text('2x₁ + x₂ = 8')
+          .transition().duration(1000).attr('opacity', 1)
+          .transition().duration(1000).text('x₁ + 2x₂ = 10')
+          .transition().duration(1000).text('Fra (1): x₂ = 8 - 2x₁')
+          .transition().duration(1000).text('Sett inn i (2): x₁ + 2(8 - 2x₁) = 10')
+          .transition().duration(1000).text('x₁ + 16 - 4x₁ = 10')
+          .transition().duration(1000).text('-3x₁ + 16 = 10')
+          .transition().duration(1000).text('-3x₁ = -6')
+          .transition().duration(1000).text('x₁ = 2')
+          .transition().duration(1000).text('x₂ = 8 - 2(2) = 4')
+          .transition().duration(1000).remove();
+        svg.append('circle')
+          .attr('cx', xScale(2))
+          .attr('cy', yScale(4))
+          .attr('r', 5)
+          .attr('fill', 'blue');
+      },
+
+      // Trinn 6: Tegn alle hjørnepunkter
+      () => {
+        d3.select('#instruction').text('Tegn alle hjørnepunkter. Grønne er gyldige, røde er ugyldige basert på begrensningene.');
+        cornerPoints.forEach(point => {
+          svg.append('circle')
+            .attr('cx', xScale(point.x))
+            .attr('cy', yScale(point.y))
+            .attr('r', 5)
+            .attr('fill', point.legal ? 'green' : 'red');
+        });
+      },
+
+      // Trinn 7: Tegn mulighetsområdet
+      () => {
+        d3.select('#instruction').text('Området innenfor de gyldige hjørnepunktene er mulighetsområdet. Vi fyller det med gult.');
+        svg.append('path')
+          .attr('d', d3.line()(feasiblePoints.map(p => [xScale(p[0]), yScale(p[1])]).concat([xScale(feasiblePoints[0][0]), yScale(feasiblePoints[0][1])])))
+          .attr('fill', 'yellow')
+          .attr('stroke', 'black')
+          .attr('fill-opacity', 0.5);
+        svg.append('text')
+          .attr('x', xScale(1))
+          .attr('y', yScale(4))
+          .attr('text-anchor', 'middle')
+          .attr('font-size', '14px')
+          .attr('fill', 'black')
+          .text('Mulighetsområde');
+      },
+
+      // Trinn 8: Tegn målfunksjonen
+      () => {
+        d3.select('#instruction').text('Tegn målfunksjonen z = 3x₁ + 2x₂ for z = 6:');
+        const calc = svg.append('text')
+          .attr('class', 'calculation')
+          .attr('x', xScale(1))
+          .attr('y', yScale(3))
+          .text('Sett x₁ = 0: 2x₂ = 6')
+          .transition().duration(1000).attr('opacity', 1)
+          .transition().duration(1000).text('x₂ = 3')
+          .transition().duration(1000).text('Sett x₂ = 0: 3x₁ = 6')
+          .transition().duration(1000).text('x₁ = 2');
+        svg.append('path')
+          .attr('class', 'objective')
+          .attr('d', d3.line()([
+            [xScale(0), yScale(3)],
+            [xScale(2), yScale(0)]
+          ]))
+          .attr('stroke', 'red')
+          .attr('stroke-width', 2)
+          .attr('stroke-dasharray', '5,5');
+      },
+
+      // Trinn 9: Forklar maksimering
+      () => {
+        d3.select('#instruction').text('Flytt målfunksjonen parallelt oppover til den treffer det siste gyldige hjørnepunktet.');
+      },
+
+      // Trinn 10: Animer til maksimum
+      () => {
+        d3.select('#instruction').text('Animer til maksimum ved (2, 4), hvor z = 3(2) + 2(4) = 14:');
+        const calc = svg.append('text')
+          .attr('class', 'calculation')
+          .attr('x', xScale(3))
+          .attr('y', yScale(5))
+          .text('z = 3(2) + 2(4)')
+          .transition().duration(1000).attr('opacity', 1)
+          .transition().duration(1000).text('z = 6 + 8')
+          .transition().duration(1000).text('z = 14');
+        const objective = svg.select('.objective');
+        const maxZ = 14;
+        const duration = 2000;
+
+        objective.transition()
+          .duration(duration)
+          .attrTween('d', () => {
+            const interpolate = d3.interpolate(6, maxZ);
+            return t => {
+              const z = interpolate(t);
+              const x1 = 0;
+              const y1 = z / 2;
+              const x2 = z / 3;
+              const y2 = 0;
+              return d3.line()([
+                [xScale(x1), yScale(y1)],
+                [xScale(x2), yScale(y2)]
+              ]);
+            };
+          })
+          .on('end', () => {
+            d3.select('#instruction').text('Maksimal verdi er z = 14 ved (2, 4). Animasjonen er ferdig!');
+            calc.transition().duration(1000).remove();
+            d3.select('#next-button').attr('disabled', true);
+          });
+      }
+    ];
+
+    // Håndter "Neste"-knappen
+    d3.select('#next-button').on('click', () => {
+      if (currentStep < steps.length) {
+        steps[currentStep]();
+        currentStep++;
+      } else {
+        d3.select('#next-button').attr('disabled', true);
+      }
+    });
+  </script>
+</body>
+</html>
