@@ -1,6 +1,42 @@
----
-title: Welcome to my blog
----
----
-yeah
----
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Min GitHub Pages-side</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    h1 {
+      color: #333;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      margin: 15px 0;
+    }
+    a {
+      text-decoration: none;
+      color: #007bff;
+      font-size: 18px;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Velkommen til min GitHub Pages-side</h1>
+  <p>Her er en oversikt over mine animasjoner:</p>
+  <ul>
+    <li><a href="linear_programming_with_new_constraints.html">Lineær programmering med nye begrensninger</a></li>
+    <!-- Legg til flere lenker her etter hvert som du laster opp flere filer -->
+    <!-- Eksempel: <li><a href="another_animation.html">En annen animasjon</a></li> -->
+  </ul>
+</body>
+</html>
