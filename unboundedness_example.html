@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ubegrensede Løsninger i Simplex-metoden</title>
+    <title>Animert Visualisering av Ubegrensede Løsninger</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -124,6 +124,22 @@
             cursor: not-allowed;
         }
         
+        .animation-btn {
+            background-color: #e74c3c;
+            margin-top: 10px;
+        }
+        
+        .animation-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .animation-controls {
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            margin-top: 10px;
+        }
+        
         .step-indicator {
             text-align: center;
             margin-bottom: 20px;
@@ -151,10 +167,25 @@
             color: #d32f2f;
             font-weight: bold;
         }
+        
+        .box-highlight {
+            border: 2px solid #e74c3c;
+            padding: 5px;
+            display: inline-block;
+        }
+        
+        #value-tracker {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin: 15px 0;
+            color: #e74c3c;
+            height: 30px;
+        }
     </style>
 </head>
 <body>
-    <h1>Ubegrensede Løsninger i Simplex-metoden</h1>
+    <h1>Animert Visualisering av Ubegrensede Løsninger</h1>
     
     <div class="step-indicator">
         Steg <span id="currentStep">1</span> av <span id="totalSteps">5</span>
@@ -165,6 +196,11 @@
             <h2>Geometrisk Visualisering</h2>
             <div id="canvas-container">
                 <canvas id="geometricCanvas" width="450" height="350"></canvas>
+                <div id="value-tracker"></div>
+                <div class="animation-controls" style="margin-top: 15px; text-align: center;">
+                    <button id="animateBtn" class="animation-btn" disabled>Vis animasjon</button>
+                    <button id="stopAnimBtn" class="animation-btn" disabled style="background-color: #7f8c8d;">Stopp animasjon</button>
+                </div>
             </div>
         </div>
         
@@ -194,12 +230,18 @@
         const backBtn = document.getElementById('backBtn');
         const nextBtn = document.getElementById('nextBtn');
         const resetBtn = document.getElementById('resetBtn');
+        const animateBtn = document.getElementById('animateBtn');
+        const stopAnimBtn = document.getElementById('stopAnimBtn');
         const currentStepDisplay = document.getElementById('currentStep');
         const totalStepsDisplay = document.getElementById('totalSteps');
+        const valueTracker = document.getElementById('value-tracker');
         
         // Tilstands-variabler
         let currentStep = 0;
         const totalSteps = 5;
+        let animationId = null;
+        let animationStep = 0;
+        const maxAnimationSteps = 200;
         
         // Oppdater steg-displayet og knapp-tilgjengelighet
         function updateStepDisplay() {
@@ -219,40 +261,53 @@
             } else {
                 backBtn.disabled = false;
             }
+            
+            // Aktiver animasjonsknappen kun i siste steg
+            animateBtn.disabled = (currentStep !== 4);
+            stopAnimBtn.disabled = true;
         }
         
         // Tableauer for hvert steg
         const tableaus = [
             // Steg 1: Initialt tableau
             [
-                ['Basis', 'x₁', 'x₂', 's₁', 'b'],
-                ['Z', -2, -1, 0, 0],
-                ['s₁', -1, 1, 1, 10]
+                ['Basis', 'x₁', 'x₂', 's₁', 's₂', 's₃', 'b'],
+                ['Z', -2, -1, 0, 0, 0, 0],
+                ['s₁', 1, -1, 1, 0, 0, 2],
+                ['s₂', -1, 0, 0, 1, 0, -1],
+                ['s₃', 0, -1, 0, 0, 1, 0]
             ],
-            // Steg 2: Identifisering av inngående variabel (x₁)
+            // Steg 2: Etter første iterasjon
             [
-                ['Basis', 'x₁', 'x₂', 's₁', 'b'],
-                ['Z', -2, -1, 0, 0],
-                ['s₁', -1, 1, 1, 10]
+                ['Basis', 'x₁', 'x₂', 's₁', 's₂', 's₃', 'b'],
+                ['Z', 0, -1, 2, 0, 0, 4],
+                ['x₁', 1, -1, 1, 0, 0, 2],
+                ['s₂', 0, -1, 1, 1, 0, 1],
+                ['s₃', 0, -1, 0, 0, 1, 0]
             ],
-            // Steg 3: Forholdstalltest (alle Aij ≤ 0)
+            // Steg 3: Identifisering av inngående variabel (x₂)
             [
-                ['Basis', 'x₁', 'x₂', 's₁', 'b', 'Ratio'],
-                ['Z', -2, -1, 0, 0, '-'],
-                ['s₁', -1, 1, 1, 10, '10/-1 = ?']
+                ['Basis', 'x₁', 'x₂', 's₁', 's₂', 's₃', 'b'],
+                ['Z', 0, -1, 2, 0, 0, 4],
+                ['x₁', 1, -1, 1, 0, 0, 2],
+                ['s₂', 0, -1, 1, 1, 0, 1],
+                ['s₃', 0, -1, 0, 0, 1, 0]
             ],
-            // Steg 4: Ubegrenset løsning
+            // Steg 4: Forholdstalltest (alle Aij ≤ 0)
             [
-                ['Basis', 'x₁', 'x₂', 's₁', 'b', 'x₁ → ∞'],
-                ['Z', -2, -1, 0, 0, 'Z → ∞'],
-                ['s₁', -1, 1, 1, 10, 's₁ → -∞']
+                ['Basis', 'x₁', 'x₂', 's₁', 's₂', 's₃', 'b', 'Ratio'],
+                ['Z', 0, -1, 2, 0, 0, 4, '-'],
+                ['x₁', 1, -1, 1, 0, 0, 2, '2/-1 = ?'],
+                ['s₂', 0, -1, 1, 1, 0, 1, '1/-1 = ?'],
+                ['s₃', 0, -1, 0, 0, 1, 0, '0/-1 = ?']
             ],
-            // Steg 5: Alternativt problem med begrensning
+            // Steg 5: Ubegrenset løsning
             [
-                ['Basis', 'x₁', 'x₂', 's₁', 's₂', 'b'],
-                ['Z', -2, -1, 0, 0, 0],
-                ['s₁', -1, 1, 1, 0, 10],
-                ['s₂', 1, 0, 0, 1, 5]
+                ['Basis', 'x₁', 'x₂', 's₁', 's₂', 's₃', 'b', 'x₂ → ∞'],
+                ['Z', 0, -1, 2, 0, 0, 4, 'Z → ∞'],
+                ['x₁', 1, -1, 1, 0, 0, 2, 'x₁ → ∞'],
+                ['s₂', 0, -1, 1, 1, 0, 1, 's₂ → ∞'],
+                ['s₃', 0, -1, 0, 0, 1, 0, 's₃ → ∞']
             ]
         ];
         
@@ -264,72 +319,73 @@
             <p>La oss se på følgende lineære programmeringsproblem:</p>
             <p><span class="math">Maksimer Z = 2x₁ + x₂</span></p>
             <p>Med følgende restriksjoner:</p>
-            <p><span class="math">-x₁ + x₂ ≤ 10</span></p>
-            <p><span class="math">x₁, x₂ ≥ 0</span></p>
-            <p>I det initiale tableau er slakkvariabelen s₁ i basis.</p>
-            <p>Vi starter fra punktet (0,0), med Z = 0.</p>
-            <p class="note">Legg merke til at dette problemet bare har én restriksjon (bortsett fra ikke-negativitets-restriksjonene). Dette kan være et tegn på at løsningsområdet ikke er begrenset.</p>
+            <p><span class="math">x₁ - x₂ ≤ 2</span> (restriksjon 1)</p>
+            <p><span class="math">-x₁ ≤ -1</span> eller <span class="math">x₁ ≥ 1</span> (restriksjon 2)</p>
+            <p><span class="math">-x₂ ≤ 0</span> eller <span class="math">x₂ ≥ 0</span> (restriksjon 3)</p>
+            <p>I standardform ser problemet slik ut:</p>
+            <p><span class="math">Maksimer Z = 2x₁ + x₂</span></p>
+            <p><span class="math">x₁ - x₂ + s₁ = 2</span></p>
+            <p><span class="math">-x₁ + s₂ = -1</span></p>
+            <p><span class="math">-x₂ + s₃ = 0</span></p>
+            <p><span class="math">x₁, x₂, s₁, s₂, s₃ ≥ 0</span></p>
+            <p>Legg merke til at vi har en negativ konstant i den andre restriksjonen, noe som betyr at x₁ ikke kan være mindre enn 1.</p>
             `,
             
-            // Steg 2: Identifisering av inngående variabel
+            // Steg 2: Etter første iterasjon
             `
-            <h3>Velge inngående variabel</h3>
-            <p>For å forbedre objektivfunksjonen velger vi inngående variabel med den mest negative koeffisienten i objektivfunksjonsraden:</p>
-            <p>x₁ har koeffisient -2 (mer negativ enn -1), så <strong>x₁ blir inngående variabel</strong>.</p>
-            <p>Neste steg er å bestemme utgående variabel ved hjelp av forholdstallstesten:</p>
-            <p><span class="math">min {b_i / a_{ij} | a_{ij} > 0}</span></p>
-            <p>Vi må altså finne minimum av forholdstallet b/a for alle positive a-verdier i x₁-kolonnen.</p>
+            <h3>Første iterasjon: x₁ kommer inn i basis</h3>
+            <p>I det initiale tableau ser vi at x₁ har den mest negative koeffisienten (-2) i objektivfunksjonsraden, så vi velger x₁ som inngående variabel.</p>
+            <p>Vi kan bruke forholdstallstesten til å bestemme utgående variabel:</p>
+            <ul>
+                <li>Rad 2 (s₁): 2/1 = 2</li>
+                <li>Rad 3 (s₂): -1/(-1) = 1 (minste positive forholdstall)</li>
+            </ul>
+            <p>Så s₂ blir utgående variabel, og vi utfører pivot-operasjonen.</p>
+            <p>Etter første iterasjon har vi nå x₁ i basis med verdi 1, og objektivfunksjonsverdien har økt til Z = 4.</p>
             `,
             
-            // Steg 3: Forholdstalltest
+            // Steg 3: Identifisering av inngående variabel
+            `
+            <h3>Andre iterasjon: Identifisering av inngående variabel</h3>
+            <p>I det nåværende tableau ser vi at x₂ har en negativ koeffisient (-1) i objektivfunksjonsraden, så vi velger x₂ som inngående variabel.</p>
+            <p>Dette vil gi en økning i objektivfunksjonsverdien.</p>
+            <p>Neste steg er å bruke forholdstallstesten for å bestemme utgående variabel.</p>
+            `,
+            
+            // Steg 4: Forholdstalltest
             `
             <h3>Forholdstallstesten</h3>
-            <p>Vi ser på x₁-kolonnen for å beregne forholdstallene:</p>
+            <p>Vi ser på x₂-kolonnen for å beregne forholdstallene:</p>
             <ul>
-                <li>Rad 2 (s₁): a₁₁ = -1 (negativ!)</li>
+                <li>Rad 2 (x₁): 2/(-1) = -2 (negativt!)</li>
+                <li>Rad 3 (s₂): 1/(-1) = -1 (negativt!)</li>
+                <li>Rad 4 (s₃): 0/(-1) = 0 (null!)</li>
             </ul>
-            <p class="warning"><strong>Problem:</strong> Alle koeffisienter i x₁-kolonnen er mindre enn eller lik 0. Dette betyr at forholdstallstesten feiler!</p>
-            <p>Hva skjer når vi prøver å beregne forholdstallet?</p>
-            <p><span class="math">10 / (-1) = -10</span> (negativt forholdstall)</p>
-            <p>Siden alle koeffisienter er ≤ 0, kan vi ikke finne en utgående variabel. Dette betyr at vi kan øke x₁ ubegrenset uten å bryte noen av restriksjonene.</p>
+            <p class="warning"><strong>Problem:</strong> Alle koeffisienter i x₂-kolonnen er mindre enn eller lik 0. Dette betyr at forholdstallstesten feiler!</p>
+            <p>Vi får bare negative eller null-verdier for forholdstallene. Når dette skjer, betyr det at ingen restriksjon begrenser hvor mye vi kan øke x₂.</p>
             `,
             
-            // Steg 4: Ubegrenset løsning
+            // Steg 5: Ubegrenset løsning
             `
             <h3>Ubegrenset løsning</h3>
             <p>Når alle koeffisienter i den inngående variabelens kolonne er ≤ 0, betyr det at det ikke finnes noen øvre grense for hvor mye vi kan øke variabelen.</p>
-            <p>Her er hva som skjer når vi øker x₁:</p>
+            <p>Her er hva som skjer når vi øker x₂:</p>
             <ul>
-                <li>x₁ kan økes til <span class="infinity">∞</span></li>
-                <li>Z = 2x₁ + x₂ vil også øke til <span class="infinity">∞</span> (siden koeffisienten til x₁ er positiv i objektivfunksjonen)</li>
-                <li>s₁ = 10 - (-1)·x₁ = 10 + x₁ vil også øke</li>
-                <li>x₂ forblir 0 (siden den ikke er i basis)</li>
+                <li>x₂ kan økes til <span class="infinity">∞</span></li>
+                <li>Z = 2x₁ + x₂ vil også øke til <span class="infinity">∞</span> (siden koeffisienten til x₂ er positiv i objektivfunksjonen)</li>
+                <li>x₁ vil øke siden x₁ = 2 + x₂ (basert på første restriksjon)</li>
+                <li>s₂ vil øke siden s₂ = 1 + x₂ (basert på andre restriksjon)</li>
             </ul>
             <p>Dette betyr at problemet har en <strong>ubegrenset løsning</strong>. Det finnes ingen optimal løsning, siden objektivfunksjonen kan bli vilkårlig stor.</p>
-            <p class="note">Dette bekreftes geometrisk: løsningsområdet strekker seg uendelig langt i x₁-retningen, og objektivfunksjonen øker i denne retningen.</p>
-            `,
-            
-            // Steg 5: Alternativt problem med begrensning
-            `
-            <h3>Sammenligning: Et begrenset problem</h3>
-            <p>La oss se hva som ville skjedd om vi hadde en ekstra restriksjon:</p>
-            <p><span class="math">x₁ ≤ 5</span></p>
-            <p>Det ville gitt oss tableau til venstre.</p>
-            <p>Med denne ekstra restriksjonen ville problemet hatt en begrenset løsning. Hvorfor?</p>
-            <ul>
-                <li>x₁-kolonnen ville nå ha en positiv koeffisient i rad 3 (s₂)</li>
-                <li>Forholdstallstesten ville gitt oss 5/1 = 5 for rad 3</li>
-                <li>Vi kunne dermed ha funnet en utgående variabel (s₂)</li>
-                <li>Løsningsområdet ville blitt begrenset, og vi ville fått en optimal løsning ved (5, 15) med Z = 15</li>
-            </ul>
             <p class="note"><strong>Oppsummering om ubegrensede løsninger:</strong></p>
             <ul>
                 <li>Ubegrensede løsninger oppstår når forholdstallstesten feiler</li>
                 <li>Dette skjer når alle koeffisienter Aᵢⱼ ≤ 0 i den inngående variabelens kolonne</li>
                 <li>Det betyr at ingen restriksjon begrenser den inngående variabelen</li>
-                <li>Variabelen kan økes uendelig, og hvis dens koeffisient i objektivfunksjonen er positiv, vil objektivfunksjonen også øke uendelig</li>
-                <li>For å unngå ubegrensede løsninger, må det finnes tilstrekkelige restriksjoner som begrenser alle variable</li>
+                <li>Geometrisk representerer dette en åpen region som strekker seg uendelig i minst én retning</li>
+                <li>Hvis objektivfunksjonen øker i denne retningen, har problemet en ubegrenset løsning</li>
             </ul>
+            <p>Trykk på <strong>"Vis animasjon"</strong> for å se hvordan målfunksjonen øker uendelig når x₂ øker!</p>
             `
         ];
         
@@ -356,13 +412,18 @@
                     if (j === 0) cellClass = 'basis';
                     else if (j === highlightColumn) cellClass = 'highlighted';
                     
-                    // Fremhev negative koeffisienter i x₁-kolonnen i steg 3
-                    if (index === 2 && j === 1 && tableau[i][j] < 0) {
+                    // Fremhev negative koeffisienter i x₂-kolonnen i steg 4
+                    if (index === 3 && j === 1 && tableau[i][j] < 0) {
                         cellClass = 'negative-highlight';
                     }
                     
-                    // Fremhev "til uendelig" i steg 4
-                    if (index === 3 && j === tableau[i].length - 1) {
+                    // Fremhev ratio-kolonnen i steg 4
+                    if (index === 3 && j === 7) {
+                        cellClass = 'negative-highlight';
+                    }
+                    
+                    // Fremhev "til uendelig" i steg 5
+                    if (index === 4 && j === tableau[i].length - 1) {
                         cellClass = 'negative-highlight';
                     }
                     
@@ -377,11 +438,11 @@
         }
         
         // Tegn geometrisk visualisering
-        function drawGeometricVisualization(step) {
+        function drawGeometricVisualization(step, animParam = 0) {
             const width = geometricCanvas.width;
             const height = geometricCanvas.height;
-            const scale = 20; // piksler per enhet
-            const originX = 60;
+            const scale = 40; // piksler per enhet
+            const originX = 80;
             const originY = height - 60;
             
             // Rens canvas
@@ -411,156 +472,201 @@
             ctx.fillText('0', originX - 15, originY + 15);
             
             // Aksemerker
-            for (let i = 1; i <= 15; i++) {
+            for (let i = 1; i <= 10; i++) {
                 // x-aksen
-                ctx.beginPath();
-                ctx.moveTo(originX + i * scale, originY - 3);
-                ctx.lineTo(originX + i * scale, originY + 3);
-                ctx.stroke();
-                
-                if (i % 5 === 0 || i === 1) {
-                    ctx.fillText(i.toString(), originX + i * scale - 3, originY + 15);
+                const xPos = originX + i * scale;
+                if (xPos < width - 20) {
+                    ctx.beginPath();
+                    ctx.moveTo(xPos, originY - 3);
+                    ctx.lineTo(xPos, originY + 3);
+                    ctx.stroke();
+                    
+                    if (i % 2 === 0 || i === 1) {
+                        ctx.fillText(i.toString(), xPos - 3, originY + 15);
+                    }
                 }
                 
                 // y-aksen
-                ctx.beginPath();
-                ctx.moveTo(originX - 3, originY - i * scale);
-                ctx.lineTo(originX + 3, originY - i * scale);
-                ctx.stroke();
-                
-                if (i % 5 === 0 || i === 1) {
-                    ctx.fillText(i.toString(), originX - 15, originY - i * scale + 5);
+                const yPos = originY - i * scale;
+                if (yPos > 20) {
+                    ctx.beginPath();
+                    ctx.moveTo(originX - 3, yPos);
+                    ctx.lineTo(originX + 3, yPos);
+                    ctx.stroke();
+                    
+                    if (i % 2 === 0 || i === 1) {
+                        ctx.fillText(i.toString(), originX - 15, yPos + 5);
+                    }
                 }
             }
             
-            // Tegn restriksjonslinjen -x₁ + x₂ = 10
-            ctx.strokeStyle = '#e74c3c';
+            // Tegn restriksjonslinjene
+            
+            // Restriksjon 1: x₁ - x₂ = 2
+            ctx.strokeStyle = '#3498db';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(originX - 10 * scale, originY); // når x₂ = 0, x₁ = -10 (utenfor visning)
-            ctx.lineTo(originX + 15 * scale, originY - 25 * scale); // når x₁ = 15, x₂ = 25
+            ctx.moveTo(originX + 2 * scale, originY); // når x₂ = 0, x₁ = 2
+            ctx.lineTo(originX + 8 * scale, originY - 6 * scale); // når x₁ = 8, x₂ = 6
             ctx.stroke();
+            ctx.fillStyle = '#3498db';
+            ctx.fillText('x₁ - x₂ = 2', originX + 7 * scale, originY - 5 * scale);
             
-            // Legg til tekst for restriksjonen
+            // Restriksjon 2: x₁ = 1 (vertikal linje)
+            ctx.strokeStyle = '#e74c3c';
+            ctx.beginPath();
+            ctx.moveTo(originX + 1 * scale, originY);
+            ctx.lineTo(originX + 1 * scale, 20);
+            ctx.stroke();
             ctx.fillStyle = '#e74c3c';
-            ctx.font = '14px Arial';
-            ctx.fillText('-x₁ + x₂ = 10', originX + 8 * scale, originY - 18 * scale);
+            ctx.fillText('x₁ = 1', originX + 1 * scale + 5, originY - 20);
             
-            // Tegn ekstra restriksjon x₁ = 5 i steg 5
-            if (step === 4) {
-                ctx.strokeStyle = '#3498db';
-                ctx.beginPath();
-                ctx.moveTo(originX + 5 * scale, originY);
-                ctx.lineTo(originX + 5 * scale, 20);
-                ctx.stroke();
-                ctx.fillStyle = '#3498db';
-                ctx.fillText('x₁ = 5', originX + 5 * scale + 5, originY - 5);
-            }
+            // Restriksjon 3: x₂ = 0 (horisontal linje, x-aksen)
+            ctx.strokeStyle = '#2ecc71';
+            ctx.beginPath();
+            ctx.moveTo(originX, originY);
+            ctx.lineTo(width - 20, originY);
+            ctx.stroke();
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillText('x₂ = 0', originX + width/2, originY + 15);
             
             // Skyggelegg løsningsområdet
             ctx.fillStyle = 'rgba(52, 152, 219, 0.1)';
             ctx.beginPath();
-            ctx.moveTo(originX, originY); // (0,0)
-            ctx.lineTo(originX, originY - 10 * scale); // (0,10)
+            ctx.moveTo(originX + 1 * scale, originY); // (1,0)
+            ctx.lineTo(originX + 1 * scale, originY - 8 * scale); // (1,8) - høyt nok
             
-            if (step === 4) {
-                // Med ekstra restriksjon
-                ctx.lineTo(originX + 5 * scale, originY - 15 * scale); // (5,15)
-                ctx.lineTo(originX + 5 * scale, originY); // (5,0)
-            } else {
-                // Uten ekstra restriksjon (ubegrenset)
-                ctx.lineTo(originX + width, originY - width); // Til høyre kant
-            }
+            // Skjæringspunktet mellom x₁ = 1 og x₁ - x₂ = 2
+            // Når x₁ = 1: 1 - x₂ = 2 => x₂ = -1, men siden x₂ ≥ 0, bruker vi (1,0)
             
+            // Skjæringspunktet mellom x₁ - x₂ = 2 og x-aksen
+            // Når x₂ = 0: x₁ - 0 = 2 => x₁ = 2
+            ctx.lineTo(originX + 3 * scale, originY - 1 * scale); // omtrentlig punkt på linjen
+            ctx.lineTo(originX + 2 * scale, originY); // (2,0)
             ctx.closePath();
             ctx.fill();
             
-            // Tegn objektivfunksjonens retning
-            ctx.strokeStyle = '#9b59b6';
-            ctx.setLineDash([5, 3]);
-            ctx.beginPath();
-            ctx.moveTo(originX, originY);
-            ctx.lineTo(originX + 8 * scale, originY - 4 * scale);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.fillStyle = '#9b59b6';
-            ctx.fillText('Z = 2x₁ + x₂', originX + 8 * scale, originY - 3 * scale);
-            
-            // Vis objektivfunksjonslinjer for ulike Z-verdier
-            if (step >= 2) {
-                // Z = 5
-                ctx.strokeStyle = 'rgba(155, 89, 182, 0.3)';
-                ctx.setLineDash([2, 2]);
-                ctx.beginPath();
-                ctx.moveTo(originX, originY - 5 * scale); // (0,5)
-                ctx.lineTo(originX + 2.5 * scale, originY); // (2.5,0)
-                ctx.stroke();
-                ctx.fillStyle = 'rgba(155, 89, 182, 0.5)';
-                ctx.fillText('Z = 5', originX + 2.5 * scale, originY - 1 * scale);
+            // For animasjon, tegn en diagonal linje som representerer objektivfunksjonen som beveger seg
+            if (step === 4 && animParam > 0) {
+                const offset = animParam * scale;
                 
-                // Z = 10
-                ctx.beginPath();
-                ctx.moveTo(originX, originY - 10 * scale); // (0,10)
-                ctx.lineTo(originX + 5 * scale, originY); // (5,0)
-                ctx.stroke();
-                ctx.fillText('Z = 10', originX + 5 * scale, originY - 1 * scale);
+                // Beregn x₂-verdi for animasjonen
+                const x2Value = animParam;
+                // Beregn tilsvarende x₁-verdi basert på restriksjonen x₁ - x₂ = 2
+                const x1Value = 2 + x2Value;
+                // Beregn Z-verdi
+                const zValue = 2 * x1Value + x2Value;
                 
-                // Z = 20
-                ctx.beginPath();
-                ctx.moveTo(originX, originY - 20 * scale); // (0,20)
-                ctx.lineTo(originX + 10 * scale, originY); // (10,0)
-                ctx.stroke();
-                ctx.fillText('Z = 20', originX + 10 * scale, originY - 1 * scale);
+                // Vis aktuelle verdier
+                valueTracker.innerHTML = `x₂ = ${x2Value.toFixed(1)}, x₁ = ${x1Value.toFixed(1)}, Z = ${zValue.toFixed(1)}`;
                 
-                // Z = 30
+                // Tegn animert punkt som beveger seg langs ubegrenset retning
+                ctx.fillStyle = '#e74c3c';
                 ctx.beginPath();
-                ctx.moveTo(originX, originY - 30 * scale); // (0,30) (utenfor visning)
-                ctx.lineTo(originX + 15 * scale, originY); // (15,0)
-                ctx.stroke();
-                ctx.fillText('Z = 30', originX + 15 * scale, originY - 1 * scale);
+                ctx.arc(originX + x1Value * scale, originY - x2Value * scale, 6, 0, 2 * Math.PI);
+                ctx.fill();
                 
+                // Tegn objektivfunksjonslinje som beveger seg
+                ctx.strokeStyle = '#9b59b6';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 3]);
+                
+                // Finn to punkter på objektivfunksjonslinjen Z = 2x₁ + x₂ = zValue
+                // Når x₂ = 0: 2x₁ + 0 = zValue => x₁ = zValue/2
+                const x1AtX2Zero = zValue / 2;
+                // Når x₁ = 0: 2*0 + x₂ = zValue => x₂ = zValue
+                const x2AtX1Zero = zValue;
+                
+                ctx.beginPath();
+                if (x1AtX2Zero <= 9) { // Sikre at vi ikke tegner utenfor canvas
+                    ctx.moveTo(originX + x1AtX2Zero * scale, originY);
+                    ctx.lineTo(originX, originY - x2AtX1Zero * scale);
+                } else {
+                    // Alternativ hvis linjen går utenfor canvas
+                    const x1Max = 9; // Maksimal x₁-verdi vi vil vise
+                    const x2AtX1Max = (zValue - 2 * x1Max); // Tilsvarende x₂-verdi
+                    ctx.moveTo(originX + x1Max * scale, originY - x2AtX1Max * scale);
+                    ctx.lineTo(originX, originY - x2AtX1Zero * scale);
+                }
+                ctx.stroke();
                 ctx.setLineDash([]);
+                
+                // Legg til tekst for objektivfunksjonen
+                ctx.fillStyle = '#9b59b6';
+                ctx.fillText(`Z = ${zValue.toFixed(1)}`, originX + 4 * scale, originY - offset/2);
+                
+                // Tegn pil som viser retningen
+                if (animParam > 3) {
+                    const arrowSize = 10;
+                    const arrowAngle = Math.atan2(1, 1); // ca 45 grader for retning (1,1)
+                    
+                    ctx.strokeStyle = '#e74c3c';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    const arrowStartX = originX + x1Value * scale - 20 * Math.cos(arrowAngle);
+                    const arrowStartY = originY - x2Value * scale + 20 * Math.sin(arrowAngle);
+                    ctx.moveTo(arrowStartX, arrowStartY);
+                    ctx.lineTo(originX + x1Value * scale, originY - x2Value * scale);
+                    ctx.stroke();
+                    
+                    // Pilspiss
+                    ctx.beginPath();
+                    ctx.moveTo(originX + x1Value * scale, originY - x2Value * scale);
+                    ctx.lineTo(
+                        originX + x1Value * scale - arrowSize * Math.cos(arrowAngle - Math.PI/6),
+                        originY - x2Value * scale + arrowSize * Math.sin(arrowAngle - Math.PI/6)
+                    );
+                    ctx.lineTo(
+                        originX + x1Value * scale - arrowSize * Math.cos(arrowAngle + Math.PI/6),
+                        originY - x2Value * scale + arrowSize * Math.sin(arrowAngle + Math.PI/6)
+                    );
+                    ctx.closePath();
+                    ctx.fillStyle = '#e74c3c';
+                    ctx.fill();
+                }
+            } else {
+                valueTracker.innerHTML = '';
             }
             
-            // Vis den ubegrensede retningen
-            if (step >= 3) {
-                ctx.strokeStyle = '#d32f2f';
-                ctx.lineWidth = 3;
+            // Vis startpunkt og andre viktige punkter
+            if (step >= 1) {
+                // Startpunkt
+                drawPoint(originX + 1 * scale, originY, '#000', '(1,0)');
+            }
+            
+            // Vis retningspil for ubegrenset løsning
+            if (step === 4 && animParam === 0) {
+                ctx.strokeStyle = '#e74c3c';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 3]);
                 ctx.beginPath();
-                ctx.moveTo(originX, originY);
-                ctx.lineTo(originX + 17 * scale, originY);
+                ctx.moveTo(originX + 1 * scale, originY);
+                ctx.lineTo(originX + 8 * scale, originY - 7 * scale);
                 ctx.stroke();
+                ctx.setLineDash([]);
                 
                 // Tegn pil
+                const arrowSize = 10;
+                const arrowAngle = Math.atan2(7, 7); // ca 45 grader
+                
+                // Pilspiss
                 ctx.beginPath();
-                ctx.moveTo(originX + 17 * scale, originY);
-                ctx.lineTo(originX + 16 * scale, originY - 3);
-                ctx.lineTo(originX + 16 * scale, originY + 3);
+                ctx.moveTo(originX + 8 * scale, originY - 7 * scale);
+                ctx.lineTo(
+                    originX + 8 * scale - arrowSize * Math.cos(arrowAngle - Math.PI/6),
+                    originY - 7 * scale + arrowSize * Math.sin(arrowAngle - Math.PI/6)
+                );
+                ctx.lineTo(
+                    originX + 8 * scale - arrowSize * Math.cos(arrowAngle + Math.PI/6),
+                    originY - 7 * scale + arrowSize * Math.sin(arrowAngle + Math.PI/6)
+                );
                 ctx.closePath();
-                ctx.fillStyle = '#d32f2f';
+                ctx.fillStyle = '#e74c3c';
                 ctx.fill();
                 
-                // Legg til tekst om ubegrenset retning
-                ctx.fillStyle = '#d32f2f';
-                ctx.font = 'bold 14px Arial';
-                if (step === 3) {
-                    ctx.fillText('x₁ kan øke ubegrenset!', originX + 8 * scale, originY + 20);
-                    ctx.fillText('Z → ∞', originX + 14 * scale, originY - 10);
-                }
+                ctx.fillText('Ubegrenset retning', originX + 4 * scale, originY - 4 * scale - 15);
+                ctx.fillText('Z → ∞', originX + 6 * scale, originY - 5 * scale + 15);
             }
-            
-            // Vis det optimale punktet i steg 5
-            if (step === 4) {
-                ctx.fillStyle = '#2ecc71';
-                ctx.beginPath();
-                ctx.arc(originX + 5 * scale, originY - 15 * scale, 5, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.fillText('Optimal løsning: (5, 15)', originX + 5 * scale + 10, originY - 15 * scale);
-                ctx.fillText('Z = 25', originX + 5 * scale + 10, originY - 15 * scale + 15);
-            }
-            
-            // Vis startpunktet
-            drawPoint(originX, originY, '#000', step === 0 ? '(0,0) Startpunkt' : '(0,0)');
         }
         
         // Tegn et punkt på canvaset
@@ -579,30 +685,93 @@
             explanationText.innerHTML = explanations[step];
         }
         
+        // Animer ubegrenset løsning
+        function animateUnboundedSolution() {
+            // Deaktiver knappene under animasjon
+            nextBtn.disabled = true;
+            backBtn.disabled = true;
+            resetBtn.disabled = true;
+            animateBtn.disabled = true;
+            stopAnimBtn.disabled = false;
+            
+            // Reset animasjonsparametere
+            animationStep = 0;
+            
+            // Start animasjonen
+            function animate() {
+                // Redusert hastighet på animasjonen
+                animationStep += 0.04;
+                
+                if (animationStep <= 10) {
+                    drawGeometricVisualization(4, animationStep);
+                    animationId = requestAnimationFrame(animate);
+                } else {
+                    // Når animasjonen er ferdig, reaktiver knappene
+                    nextBtn.disabled = (currentStep >= totalSteps - 1);
+                    backBtn.disabled = (currentStep <= 0);
+                    resetBtn.disabled = false;
+                    animateBtn.disabled = false;
+                    stopAnimBtn.disabled = true;
+                    
+                    // Vis sluttinformasjon
+                    valueTracker.innerHTML = 'Verdien av Z fortsetter å øke ubegrenset! Z → ∞';
+                }
+            }
+            
+            // Start animasjonsløkken
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        // Funksjon for å stoppe animasjonen
+        function stopAnimation() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+                
+                // Reaktiver knappene
+                nextBtn.disabled = (currentStep >= totalSteps - 1);
+                backBtn.disabled = (currentStep <= 0);
+                resetBtn.disabled = false;
+                animateBtn.disabled = false;
+                stopAnimBtn.disabled = true;
+                
+                // Vis informasjon
+                valueTracker.innerHTML = 'Animasjon stoppet. Trykk "Vis animasjon" for å starte på nytt.';
+            }
+        }
+        
         // Sett tableauet og visualiseringen basert på nåværende steg
         function renderStep() {
             updateStepDisplay();
+            
+                            // Avbryt eventuelle pågående animasjoner
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+                stopAnimBtn.disabled = true;
+            }
             
             switch (currentStep) {
                 case 0: // Initialt tableau
                     displayTableau(0);
                     drawGeometricVisualization(0);
                     break;
-                case 1: // Identifisering av inngående
-                    displayTableau(1, 1);
+                case 1: // Etter første iterasjon
+                    displayTableau(1);
                     drawGeometricVisualization(1);
                     break;
-                case 2: // Forholdstalltest
-                    displayTableau(2, 1, [1]);
+                case 2: // Identifisering av inngående
+                    displayTableau(2, 1);
                     drawGeometricVisualization(2);
                     break;
-                case 3: // Ubegrenset løsning
-                    displayTableau(3);
+                case 3: // Forholdstalltest
+                    displayTableau(3, 2, [1]);
                     drawGeometricVisualization(3);
                     break;
-                case 4: // Alternativt problem med begrensning
+                case 4: // Ubegrenset løsning
                     displayTableau(4);
                     drawGeometricVisualization(4);
+                    valueTracker.innerHTML = '';
                     break;
             }
             
@@ -630,6 +799,12 @@
             currentStep = 0;
             renderStep();
         });
+        
+        // Håndter animasjonsknappen
+        animateBtn.addEventListener('click', animateUnboundedSolution);
+        
+        // Håndter stopp animasjon-knappen
+        stopAnimBtn.addEventListener('click', stopAnimation);
         
         // Initialiser visualiseringen
         renderStep();
