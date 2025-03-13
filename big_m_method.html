@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enkel Visualisering av Big-M Metoden</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        
+        h1, h2 {
+            text-align: center;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .panel {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        #canvas-container {
+            width: 100%;
+            text-align: center;
+        }
+        
+        canvas {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            margin: 0 auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 15px;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .basis {
+            font-weight: bold;
+            background-color: #e8f4f8;
+        }
+        
+        .highlighted {
+            background-color: #fff8e1;
+        }
+        
+        .artificial {
+            background-color: #ffebee;
+            font-weight: bold;
+            color: #d32f2f;
+        }
+        
+        .m-highlight {
+            background-color: #e1f5fe;
+            font-weight: bold;
+            color: #0277bd;
+        }
+        
+        .important-box {
+            background-color: #f9f3f3;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #e74c3c;
+            margin: 15px 0;
+        }
+        
+        .note {
+            background-color: #e8f5e9;
+            padding: 10px;
+            border-left: 4px solid #2e7d32;
+            margin: 10px 0;
+        }
+        
+        .info {
+            background-color: #e1f5fe;
+            padding: 10px;
+            border-left: 4px solid #0277bd;
+            margin: 10px 0;
+        }
+        
+        .button-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .step-indicator {
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .explanation {
+            padding: 15px;
+            background-color: #f8f9fa;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+        
+        .math {
+            font-family: "Times New Roman", Times, serif;
+            font-style: italic;
+        }
+        
+        .key-element {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        
+        .equation-block {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        
+        .problem-definition {
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            max-width: 80%;
+        }
+        
+        .steps-container {
+            margin: 20px 0;
+        }
+        
+        .step-card {
+            background-color: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3498db;
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background-color: #3498db;
+            color: white;
+            text-align: center;
+            line-height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        .step-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #3498db;
+        }
+        
+        .concept-image {
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .icon {
+            font-size: 24px;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .comparison-table th {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .comparison-table th, .comparison-table td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        
+        .yes {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .no {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hva er Big-M Metoden?</h1>
+    <h2>En enkel visualisering</h2>
+    
+    <div class="step-indicator">
+        Steg <span id="currentStep">1</span> av <span id="totalSteps">4</span>
+    </div>
+    
+    <div class="container">
+        <div class="panel">
+            <h2>Geometrisk Visualisering</h2>
+            <div id="canvas-container">
+                <canvas id="geometricCanvas" width="450" height="350"></canvas>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2>Problemet og Løsningen</h2>
+            <div id="problemDisplay" class="explanation"></div>
+        </div>
+    </div>
+    
+    <div class="panel">
+        <h2>Forklaring</h2>
+        <div id="explanationText" class="explanation"></div>
+    </div>
+    
+    <div class="button-container">
+        <button id="backBtn">Tilbake</button>
+        <button id="nextBtn">Neste</button>
+        <button id="resetBtn">Start på nytt</button>
+    </div>
+    
+    <script>
+        // DOM-elementer
+        const problemDisplay = document.getElementById('problemDisplay');
+        const explanationText = document.getElementById('explanationText');
+        const geometricCanvas = document.getElementById('geometricCanvas');
+        const ctx = geometricCanvas.getContext('2d');
+        const backBtn = document.getElementById('backBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const currentStepDisplay = document.getElementById('currentStep');
+        const totalStepsDisplay = document.getElementById('totalSteps');
+        
+        // Tilstands-variabler
+        let currentStep = 0;
+        const totalSteps = 4;
+        
+        // Oppdater steg-displayet og knapp-tilgjengelighet
+        function updateStepDisplay() {
+            currentStepDisplay.textContent = currentStep + 1;
+            totalStepsDisplay.textContent = totalSteps;
+            
+            // Håndter tilgjengelighet for neste-knappen
+            if (currentStep >= totalSteps - 1) {
+                nextBtn.disabled = true;
+            } else {
+                nextBtn.disabled = false;
+            }
+            
+            // Håndter tilgjengelighet for tilbake-knappen
+            if (currentStep <= 0) {
+                backBtn.disabled = true;
+            } else {
+                backBtn.disabled = false;
+            }
+        }
+        
+        // Problemdefinisjon for hvert steg
+        const problems = [
+            // Steg 1: Problem og utfordring
+            `
+            <div class="problem-definition">
+                <h3>Vår Oppgave</h3>
+                <p><span class="math">Min Z = 8x₁ + 6x₂</span></p>
+                <p><span class="math">Når 4x₁ + 2x₂ - s₁ = 20</span></p>
+                <p><span class="math">x₁ + x₂ - s₂ = 6</span></p>
+                <p><span class="math">x₁, x₂, s₁, s₂ ≥ 0</span></p>
+            </div>
+            
+            <div class="important-box">
+                <h3>Utfordringen</h3>
+                <p>📌 Vi kan ikke bruke vanlig simplex-metode fordi:</p>
+                <ul>
+                    <li>Vi har restriksjoner med negativ slakkvariabel (s₁, s₂) - altså "større enn eller lik" (≥) restriksjoner</li>
+                    <li>Slakkvariablene kan ikke være i startbasis (siden de har negativt fortegn)</li>
+                    <li>Origo (0,0) er <strong>ikke</strong> en lovlig løsning for å starte simplex</li>
+                </ul>
+            </div>
+            `,
+            
+            // Steg 2: Introduksjon av kunstvariabler
+            `
+            <div class="problem-definition">
+                <h3>Introduserer Kunstvariabler</h3>
+                <p><span class="math">Min Z = 8x₁ + 6x₂ + <span class="artificial">Ma₁ + Ma₂</span></span></p>
+                <p><span class="math">Når 4x₁ + 2x₂ - s₁ + <span class="artificial">a₁</span> = 20</span></p>
+                <p><span class="math">x₁ + x₂ - s₂ + <span class="artificial">a₂</span> = 6</span></p>
+                <p><span class="math">x₁, x₂, s₁, s₂, a₁, a₂ ≥ 0</span></p>
+            </div>
+            
+            <div class="note">
+                <h3>Hva gjør vi?</h3>
+                <p>📌 For hver restriksjon:</p>
+                <ul>
+                    <li>Beholder <strong>slakkvariablene</strong> (s₁, s₂) fra den standard form med negativ fortegn (siden vi har "større enn eller lik" restriksjoner)</li>
+                    <li>Legger til en <strong>kunstvariabel</strong> (a₁, a₂) for hver "større enn eller lik" eller likhetsrestriksjon</li>
+                    <li>Gir kunstvariablene en <strong>stor kostnad M</strong> i målfunksjonen</li>
+                </ul>
+                <p>Dette gir oss en lovlig startløsning for simplex-algoritmen.</p>
+            </div>
+            `,
+            
+            // Steg 3: Tableauer og iterasjoner
+            `
+            <div class="problem-definition">
+                <h3>Simplex Tableauer</h3>
+                <table>
+                    <tr>
+                        <th>Basis</th>
+                        <th>x₁</th>
+                        <th>x₂</th>
+                        <th>s₁</th>
+                        <th>s₂</th>
+                        <th>a₁</th>
+                        <th>a₂</th>
+                        <th>b</th>
+                    </tr>
+                    <tr>
+                        <td class="basis">Z</td>
+                        <td>8-4M</td>
+                        <td>6-2M</td>
+                        <td>M</td>
+                        <td>M</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>-26M</td>
+                    </tr>
+                    <tr>
+                        <td class="basis">a₁</td>
+                        <td>4</td>
+                        <td>2</td>
+                        <td>-1</td>
+                        <td>0</td>
+                        <td>1</td>
+                        <td>0</td>
+                        <td>20</td>
+                    </tr>
+                    <tr>
+                        <td class="basis">a₂</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>0</td>
+                        <td>-1</td>
+                        <td>0</td>
+                        <td>1</td>
+                        <td>6</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="note">
+                <h3>Hvordan simplex-algoritmen fungerer</h3>
+                <p>📌 Algoritmen vil:</p>
+                <ul>
+                    <li>Starte med kunstvariablene i basis</li>
+                    <li>Raskt erstatte kunstvariablene (fordi de har høy kostnad M)</li>
+                    <li>Finne en lovlig løsning der alle kunstvariabler er null</li>
+                </ul>
+                <p>Simplex-algoritmen beveger seg fra det kunstige startpunktet til det optimale punktet.</p>
+            </div>
+            `,
+            
+            // Steg 4: Oppsummering og når bruke Big-M
+            `
+            <div class="problem-definition">
+                <h3>Løsning</h3>
+                <p><span class="math">x₁ = 4, x₂ = 2</span></p>
+                <p><span class="math">Z = 8(4) + 6(2) = 32 + 12 = 44</span></p>
+                <p>Dette er den optimale løsningen til det opprinnelige problemet.</p>
+            </div>
+            
+            <div class="important-box">
+                <h3>Når skal du bruke Big-M metoden?</h3>
+                <table class="comparison-table">
+                    <tr>
+                        <th>Type restriksjon</th>
+                        <th>Trenger slakkvariabel?</th>
+                        <th>Trenger kunstvariabel?</th>
+                    </tr>
+                    <tr>
+                        <td>≤ (mindre enn eller lik)</td>
+                        <td class="yes">Ja (+)</td>
+                        <td class="no">Nei</td>
+                    </tr>
+                    <tr>
+                        <td>= (likhet)</td>
+                        <td class="no">Nei</td>
+                        <td class="yes">Ja</td>
+                    </tr>
+                    <tr>
+                        <td>≥ (større enn eller lik)</td>
+                        <td class="yes">Ja (-)</td>
+                        <td class="yes">Ja</td>
+                    </tr>
+                </table>
+                <p><strong>Merk:</strong> Slakkvariabelen har positivt fortegn (+) for ≤ restriksjoner og negativt fortegn (-) for ≥ restriksjoner.</p>
+            </div>
+            `
+        ];
+        
+        // Forklaringer for hvert steg
+        const explanations = [
+            // Steg 1: Problem og utfordring
+            `
+            <h3>Hvorfor trenger vi Big-M metoden?</h3>
+            
+            <div class="steps-container">
+                <div class="step-card">
+                    <span class="step-number">1</span>
+                    <div class="step-title">Simplex-algoritmen trenger en lovlig startløsning</div>
+                    <p>I vanlig simplex starter vi fra origo (0,0) og bruker slakkvariabler for å gjøre det lovlig.</p>
+                    <p>Men når vi har likhetstegn (=) eller "større enn eller lik" (≥) restriksjoner, er origo <strong>ikke</strong> en lovlig løsning!</p>
+                </div>
+                
+                <div class="step-card">
+                    <span class="step-number">2</span>
+                    <div class="step-title">Problemet med våre restriksjoner</div>
+                    <p>Se på restriksjonene: 4x₁ + 2x₂ = 20 og x₁ + x₂ = 6</p>
+                    <p>Hvis vi setter x₁ = 0 og x₂ = 0 (origo), er de helt tydelig ikke oppfylt!</p>
+                    <p>Vi trenger en måte å lage en kunstig startløsning som simplex-algoritmen kan begynne fra.</p>
+                </div>
+                
+                <div class="step-card">
+                    <span class="step-number">3</span>
+                    <div class="step-title">Big-M metoden er løsningen</div>
+                    <p>Big-M metoden lar oss starte simplex-algoritmen ved å:</p>
+                    <ul>
+                        <li>Bruke <strong>både slakkvariabler og kunstvariabler</strong> sammen:
+                            <ul>
+                                <li>Slakkvariabler (s₁, s₂): Konverterer ulikheter til likheter</li>
+                                <li>Kunstvariabler (a₁, a₂): Gir oss en lovlig startbasis</li>
+                            </ul>
+                        </li>
+                        <li>Tvinge algoritmen til å fjerne kunstvariablene ved å gi dem veldig høy kostnad (M)</li>
+                    </ul>
+                </div>
+            </div>
+            `,
+            
+            // Steg 2: Introduksjon av kunstvariabler
+            `
+            <h3>Hvordan bruker vi kunstvariabler?</h3>
+            
+            <div class="steps-container">
+                <div class="step-card">
+                    <span class="step-number">1</span>
+                    <div class="step-title">Legg til slakkvariabler og kunstvariabler i restriksjonene</div>
+                    <p>Vi trenger <strong>begge typer</strong> variabler:</p>
+                    <ul>
+                        <li><strong>Slakkvariabler (s₁, s₂)</strong>: For å konvertere ulikheter til likheter
+                            <ul>
+                                <li>For "mindre enn eller lik" (≤): Legges til (+)</li>
+                                <li>For "større enn eller lik" (≥): Trekkes fra (-)</li>
+                            </ul>
+                        </li>
+                        <li><strong>Kunstvariabler (a₁, a₂)</strong>: For å få en lovlig startbasis
+                            <ul>
+                                <li>Legges til for hver "=" eller "≥" restriksjon</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <p>Våre restriksjoner i standard form blir:</p>
+                    <ul>
+                        <li>4x₁ + 2x₂ - s₁ + a₁ = 20</li>
+                        <li>x₁ + x₂ - s₂ + a₂ = 6</li>
+                    </ul>
+                    <p>Dette lar oss starte med a₁ = 20 og a₂ = 6 (når x₁ = x₂ = s₁ = s₂ = 0), som er en lovlig startløsning.</p>
+                </div>
+                
+                <div class="step-card">
+                    <span class="step-number">2</span>
+                    <div class="step-title">Legger til kunstvariabler i målfunksjonen</div>
+                    <p>Vi modifiserer målfunksjonen ved å legge til kunstvariablene med en <strong>veldig stor koeffisient M</strong>:</p>
+                    <p>Min Z = 8x₁ + 6x₂ + Ma₁ + Ma₂</p>
+                    <p>Siden vi minimerer og M er veldig stort, vil algoritmen prøve å få kunstvariablene ut av løsningen så fort som mulig.</p>
+                </div>
+                
+                <div class="step-card">
+                    <span class="step-number">3</span>
+                    <div class="step-title">Hvorfor dette fungerer</div>
+                    <p>Kunstvariablene gir oss en kunstig lovlig startløsning, men:</p>
+                    <ul>
+                        <li>De er ikke en del av det opprinnelige problemet</li>
+                        <li>Vi vil at de skal være 0 i den endelige løsningen</li>
+                        <li>Den høye kostnaden M sikrer at de blir fjernet fra løsningen</li>
+                    </ul>
+                    <p>Simplex vil erstatte kunstvariablene med de opprinnelige variablene (x₁, x₂) i løpet av iterasjonene.</p>
+                </div>
+            </div>
+            `,
+            
+            // Steg 3: Tableauer og iterasjoner
+            `
+            <h3>Hvordan løser vi problemet med Big-M?</h3>
+            
+            <div class="steps-container">
+                <div class="step-card">
+                    <span class="step-number">1</span>
+                    <div class="step-title">Setter opp det første tableauet</div>
+                    <p>Vi starter med kunstvariablene i basis:</p>
+                    <ul>
+                        <li>Basis: a₁ og a₂</li>
+                        <li>Målfunksjon: Min Z = 8x₁ + 6x₂ + Ma₁ + Ma₂</li>
+                    </ul>
+                    <p>Målfunksjonsraden får negative M-uttrykk for x₁ og x₂, noe som gjør dem attraktive å bringe inn i løsningen.</p>
+                </div>
+                
+                <div class="step-card">
+                    <span class="step-number">2</span>
+                    <div class="step-title">Kjører simplex-iterasjoner</div>
+                    <p>Simplex-algoritmen utfører pivot-operasjoner:</p>
+                    <ul>
+                        <li>Først bringer vi x₂ inn og erstatter a₂</li>
+                        <li>Deretter bringer vi x₁ inn og erstatter a₁</li>
+                    </ul>
+                    <p>På slutten har vi erstattet alle kunstvariablene med opprinnelige variabler.</p>
+                </div>
+                
+                <div class="step-card">
+                    <span class="step-number">3</span>
+                    <div class="step-title">Tolker den endelige løsningen</div>
+                    <p>Etter iterasjonene får vi:</p>
+                    <ul>
+                        <li>x₁ = 4, x₂ = 2</li>
+                        <li>a₁ = 0, a₂ = 0 (kunstvariablene er ute av basis)</li>
+                        <li>Z = 44</li>
+                    </ul>
+                    <p>Siden a₁ = a₂ = 0, er dette en lovlig løsning på det opprinnelige problemet.</p>
+                </div>
+            </div>
+            `,
+            
+            // Steg 4: Oppsummering og når bruke Big-M
+            `
+            <h3>Oppsummering: Når og hvordan bruker vi Big-M?</h3>
+            
+            <div class="steps-container">
+                <div class="step-card">
+                    <span class="step-number">1</span>
+                    <div class="step-title">Når skal vi bruke Big-M metoden?</div>
+                    <p>Bruk Big-M når du har:</p>
+                    <ul>
+                        <li>Likhetsrestriksjoner (=)</li>
+                        <li>"Større enn eller lik" restriksjoner (≥)</li>
+                        <li>Ingen åpenbar lovlig startløsning for simplex</li>
+                    </ul>
+                </div>
+                
+                <div class="step-card">
+                    <span class="step-number">2</span>
+                    <div class="step-title">Hvordan bruker du Big-M?</div>
+                    <ol>
+                        <li>Legg til en kunstvariabel for hver likhetsrestriksjon eller "større enn eller lik" restriksjon</li>
+                        <li>Legg til kunstvariablene i målfunksjonen med en stor koeffisient M (+ for minimering, - for maksimering)</li>
+                        <li>Bruk simplex til å finne en løsning der kunstvariablene = 0</li>
+                    </ol>
+                </div>
+                
+                <div class="step-card">
+                    <span class="step-number">3</span>
+                    <div class="step-title">Viktige poeng å huske</div>
+                    <ul>
+                        <li>Kunstvariablene er ikke en del av det opprinnelige problemet</li>
+                        <li>De er bare en måte å starte simplex-algoritmen på</li>
+                        <li>M må være tilstrekkelig stort for å sikre at kunstvariablene blir null</li>
+                        <li>Hvis du ikke kan få alle kunstvariablene til å bli null, har det opprinnelige problemet ingen lovlig løsning</li>
+                    </ul>
+                </div>
+            </div>
+            `
+        ];
+        
+        // Tegn geometrisk visualisering
+        function drawGeometricVisualization(step) {
+            const width = geometricCanvas.width;
+            const height = geometricCanvas.height;
+            const scale = 30; // piksler per enhet
+            const originX = 60;
+            const originY = height - 60;
+            
+            // Rens canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Tegn aksene
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            
+            // x-akse
+            ctx.beginPath();
+            ctx.moveTo(originX, originY);
+            ctx.lineTo(width - 20, originY);
+            ctx.stroke();
+            
+            // y-akse
+            ctx.beginPath();
+            ctx.moveTo(originX, originY);
+            ctx.lineTo(originX, 20);
+            ctx.stroke();
+            
+            // Aksenavnene
+            ctx.fillStyle = '#000';
+            ctx.font = '14px Arial';
+            ctx.fillText('x₁', width - 20, originY - 10);
+            ctx.fillText('x₂', originX + 10, 20);
+            ctx.fillText('0', originX - 15, originY + 15);
+            
+            // Aksemerker
+            for (let i = 1; i <= 10; i++) {
+                // x-aksen
+                const xPos = originX + i * scale;
+                if (xPos < width - 20) {
+                    ctx.beginPath();
+                    ctx.moveTo(xPos, originY - 3);
+                    ctx.lineTo(xPos, originY + 3);
+                    ctx.stroke();
+                    
+                    if (i % 2 === 0 || i === 1) {
+                        ctx.fillText(i.toString(), xPos - 3, originY + 15);
+                    }
+                }
+                
+                // y-aksen
+                const yPos = originY - i * scale;
+                if (yPos > 20) {
+                    ctx.beginPath();
+                    ctx.moveTo(originX - 3, yPos);
+                    ctx.lineTo(originX + 3, yPos);
+                    ctx.stroke();
+                    
+                    if (i % 2 === 0 || i === 1) {
+                        ctx.fillText(i.toString(), originX - 15, yPos + 5);
+                    }
+                }
+            }
+            
+            // Tegn restriksjonslinjene
+            
+            // Restriksjon 1: 4x₁ + 2x₂ = 20
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(originX, originY - 10 * scale); // når x₁ = 0, x₂ = 10
+            ctx.lineTo(originX + 5 * scale, originY); // når x₂ = 0, x₁ = 5
+            ctx.stroke();
+            
+            // Restriksjon 2: x₁ + x₂ = 6
+            ctx.strokeStyle = '#e74c3c';
+            ctx.beginPath();
+            ctx.moveTo(originX, originY - 6 * scale); // når x₁ = 0, x₂ = 6
+            ctx.lineTo(originX + 6 * scale, originY); // når x₂ = 0, x₁ = 6
+            ctx.stroke();
+            
+            // Legg til tekst for restriksjonene
+            ctx.fillStyle = '#3498db';
+            ctx.fillText('4x₁ + 2x₂ = 20', originX + 5 * scale, originY - 1 * scale);
+            
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillText('x₁ + x₂ = 6', originX + 6 * scale, originY - 0.5 * scale);
+            
+            // Skyggelegg løsningsområdet (skjæringen mellom linjene)
+            ctx.fillStyle = 'rgba(52, 152, 219, 0.1)';
+            ctx.beginPath();
+            
+            // Skjæringspunktet mellom linjene er (4, 2)
+            ctx.moveTo(originX + 4 * scale, originY - 2 * scale); // (4, 2)
+            
+            // Vi tegner bare det ene punktet siden det er bare der restriksjonslinene
+            // skjærer hverandre som er lovlig område
+            ctx.arc(originX + 4 * scale, originY - 2 * scale, 5, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Vis origo som ulovlig punkt i steg 1 og 2
+            if (step <= 1) {
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath();
+                ctx.arc(originX, originY, 5, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Rødt kryss over origo
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(originX - 6, originY - 6);
+                ctx.lineTo(originX + 6, originY + 6);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(originX + 6, originY - 6);
+                ctx.lineTo(originX - 6, originY + 6);
+                ctx.stroke();
+                
+                ctx.fillText('Origo (0,0) er ikke lovlig', originX + 10, originY + 15);
+            }
+            
+            // Tegn objektivfunksjonslinjer i steg 3 og 4
+            if (step >= 2) {
+                ctx.strokeStyle = '#9b59b6';
+                ctx.setLineDash([5, 3]);
+                
+                // Z = 44 (optimal verdi)
+                ctx.beginPath();
+                ctx.moveTo(originX, originY - 44/6 * scale); // når x₁ = 0
+                ctx.lineTo(originX + 44/8 * scale, originY); // når x₂ = 0
+                ctx.stroke();
+                
+                ctx.fillStyle = '#9b59b6';
+                ctx.fillText('Z = 44', originX + 2 * scale, originY - 3 * scale);
+                
+                ctx.setLineDash([]);
+            }
+            
+            // Tegn det optimale punktet i steg 3 og 4
+            if (step >= 2) {
+                ctx.fillStyle = '#2ecc71';
+                ctx.beginPath();
+                ctx.arc(originX + 4 * scale, originY - 2 * scale, 6, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.fillStyle = '#000';
+                if (step === 3) {
+                    ctx.fillText('Optimal løsning: (4, 2)', originX + 4 * scale + 10, originY - 2 * scale);
+                    ctx.fillText('Z = 44', originX + 4 * scale + 10, originY - 2 * scale + 20);
+                }
+            }
+            
+            // Vis tekst om kunstvariabler i steg 2
+            if (step === 1) {
+                ctx.fillStyle = '#0277bd';
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText('Kunstvariabler (a₁, a₂)', originX + 100, originY - 100);
+                ctx.fillText('lar oss starte simplex', originX + 100, originY - 80);
+                ctx.fillText('med en kunstig løsning', originX + 100, originY - 60);
+                
+                // Vis piler
+                ctx.strokeStyle = '#0277bd';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(originX + 100, originY - 60);
+                ctx.lineTo(originX + 50, originY - 30);
+                ctx.stroke();
+                
+                // Tegn kunstig startpunkt
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath();
+                ctx.arc(originX, originY - 6 * scale, 5, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillText('Kunstig startpunkt', originX - 60, originY - 6 * scale - 15);
+                
+                // Vis pil mot optimalpunktet
+                ctx.strokeStyle = '#e74c3c';
+                ctx.setLineDash([3, 2]);
+                ctx.beginPath();
+                ctx.moveTo(originX, originY - 6 * scale);
+                ctx.lineTo(originX + 4 * scale, originY - 2 * scale);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillText('Simplex beveger', originX + 1.5 * scale, originY - 4 * scale - 15);
+                ctx.fillText('seg hit', originX + 1.5 * scale, originY - 4 * scale);
+            }
+            
+            // Legg til flere detaljer for steg 4
+            if (step === 3) {
+                // Vis konklusjonen
+                ctx.fillStyle = '#2ecc71';
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText('a₁ = a₂ = 0', originX + 4 * scale + 10, originY - 2 * scale + 40);
+                ctx.fillText('(kunstvariablene er ute av løsningen)', originX + 4 * scale + 10, originY - 2 * scale + 60);
+            }
+        }
+        
+        // Vis problem og forklaring for nåværende steg
+        function showContent(step) {
+            problemDisplay.innerHTML = problems[step];
+            explanationText.innerHTML = explanations[step];
+        }
+        
+        // Sett visningen basert på nåværende steg
+        function renderStep() {
+            updateStepDisplay();
+            showContent(currentStep);
+            drawGeometricVisualization(currentStep);
+        }
+        
+        // Håndter neste-knappen
+        nextBtn.addEventListener('click', () => {
+            if (currentStep < totalSteps - 1) {
+                currentStep++;
+                renderStep();
+            }
+        });
+        
+        // Håndter tilbake-knappen
+        backBtn.addEventListener('click', () => {
+            if (currentStep > 0) {
+                currentStep--;
+                renderStep();
+            }
+        });
+        
+        // Håndter reset-knappen
+        resetBtn.addEventListener('click', () => {
+            currentStep = 0;
+            renderStep();
+        });
+        
+        // Initialiser visualiseringen
+        renderStep();
+        
+        // Deaktiver tilbake-knappen ved oppstart
+        backBtn.disabled = true;
+    </script>
+</body>
+</html>
