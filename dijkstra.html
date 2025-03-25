@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dijkstra's Algoritme Visualisering</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .graph-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            margin: 20px auto;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        .node {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: white;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            z-index: 2;
+        }
+        .node-label {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            border: 2px solid #4682b4;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            z-index: 3;
+        }
+        .edge {
+            position: absolute;
+            height: 2px;
+            background-color: #666;
+            z-index: 1;
+            transform-origin: left center;
+        }
+        .edge-label {
+            position: absolute;
+            background-color: #ffffcc;
+            padding: 3px 8px;
+            border-radius: 50%;
+            font-size: 16px;
+            font-weight: bold;
+            border: 1px solid #ccc;
+            z-index: 2;
+        }
+        .steps-container {
+            margin-top: 30px;
+        }
+        .step {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .step-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .algorithm-box {
+            background-color: #f0f8ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #4682b4;
+        }
+        .visited {
+            background-color: #ff6b6b;
+            border-color: #c62828;
+        }
+        .current {
+            background-color: #4caf50;
+            border-color: #2e7d32;
+            color: white;
+        }
+        .path {
+            background-color: #2196f3;
+            border-color: #0d47a1;
+            color: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .final-path {
+            font-weight: bold;
+            color: #2e7d32;
+            font-size: 18px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .highlight {
+            background-color: #ffeb3b;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dijkstra's Algoritme Visualisering</h1>
+        
+        <p>Dette er en visualisering av Dijkstra's algoritme for å finne korteste vei i en graf. I dette eksempelet søker vi korteste vei fra node 0 (startnoden) til node 6 (sluttnoden/utsiktspunktet).</p>
+        
+        <div class="algorithm-box">
+            <h3>Dijkstra's Algoritme - Hovedtrinn:</h3>
+            <ol>
+                <li>Initialiser: Gi startnoden avstand 0 og alle andre noder uendelig.</li>
+                <li>Marker startnoden som "besøkt" og legg den til i settet A.</li>
+                <li>For hver nabonode til den nåværende noden:
+                    <ul>
+                        <li>Beregn avstanden fra startnoden via den nåværende noden.</li>
+                        <li>Hvis denne avstanden er mindre enn den nåværende avstanden, oppdater avstanden.</li>
+                    </ul>
+                </li>
+                <li>Velg noden med minste avstand fra settet av ubesøkte noder (D).</li>
+                <li>Marker denne noden som "besøkt" og flytt den fra D til A.</li>
+                <li>Gjenta trinn 3-5 inntil sluttnoden er besøkt eller alle noder er besøkt.</li>
+            </ol>
+        </div>
+
+        <div class="graph-container" id="graph">
+            <!-- Nodes -->
+            <div class="node" style="top: 150px; left: 100px;" id="node0">0</div>
+            <div class="node" style="top: 75px; left: 200px;" id="node1">1</div>
+            <div class="node" style="top: 150px; left: 300px;" id="node2">2</div>
+            <div class="node" style="top: 225px; left: 200px;" id="node3">3</div>
+            <div class="node" style="top: 150px; left: 400px;" id="node4">4</div>
+            <div class="node" style="top: 225px; left: 400px;" id="node5">5</div>
+            <div class="node" style="top: 150px; left: 500px;" id="node6">6</div>
+            
+            <!-- Edge labels will be added by JavaScript -->
+        </div>
+
+        <div class="button-container">
+            <button id="resetBtn">Tilbakestill</button>
+            <button id="prevBtn" disabled>Forrige Steg</button>
+            <button id="nextBtn">Neste Steg</button>
+            <button id="autoBtn">Auto-Kjør</button>
+        </div>
+
+        <div class="steps-container">
+            <h2>Iterasjoner:</h2>
+            <div id="currentStep" class="step">
+                <div class="step-title">Iterasjon 0: Initialisering</div>
+                <p>Vi starter med å initialisere alle noder:</p>
+                <ul>
+                    <li>Startnode 0 får label 0 (kostnad 0)</li>
+                    <li>Alle andre noder får label ∞ (uendelig kostnad)</li>
+                    <li>Sett A (besøkte noder): Tom</li>
+                    <li>Sett D (ubesøkte noder): {0, 1, 2, 3, 4, 5, 6}</li>
+                </ul>
+            </div>
+
+            <h3>Nåværende Status:</h3>
+            <table id="statusTable">
+                <tr>
+                    <th>Node</th>
+                    <th>Label (Forgjenger, Kostnad)</th>
+                    <th>Status</th>
+                </tr>
+                <tr>
+                    <td>0</td>
+                    <td>-, 0</td>
+                    <td>Ubesøkt</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>-, ∞</td>
+                    <td>Ubesøkt</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>-, ∞</td>
+                    <td>Ubesøkt</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>-, ∞</td>
+                    <td>Ubesøkt</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>-, ∞</td>
+                    <td>Ubesøkt</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>-, ∞</td>
+                    <td>Ubesøkt</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>-, ∞</td>
+                    <td>Ubesøkt</td>
+                </tr>
+            </table>
+
+            <div id="finalPath" class="final-path" style="display: none;">
+                Korteste vei: 0 → 1 → 2 → 4 → 6<br>
+                Total kostnad: 13
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Graph data
+        const nodes = [
+            { id: 0, x: 100, y: 150, label: "0", cost: 0, status: "unvisited", predecessor: null },
+            { id: 1, x: 200, y: 75, label: "1", cost: Infinity, status: "unvisited", predecessor: null },
+            { id: 2, x: 300, y: 150, label: "2", cost: Infinity, status: "unvisited", predecessor: null },
+            { id: 3, x: 200, y: 225, label: "3", cost: Infinity, status: "unvisited", predecessor: null },
+            { id: 4, x: 400, y: 150, label: "4", cost: Infinity, status: "unvisited", predecessor: null },
+            { id: 5, x: 400, y: 225, label: "5", cost: Infinity, status: "unvisited", predecessor: null },
+            { id: 6, x: 500, y: 150, label: "6", cost: Infinity, status: "unvisited", predecessor: null }
+        ];
+
+        const edges = [
+            { from: 0, to: 1, weight: 2 },
+            { from: 0, to: 2, weight: 5 },
+            { from: 0, to: 3, weight: 4 },
+            { from: 1, to: 0, weight: 2 },
+            { from: 1, to: 2, weight: 2 },
+            { from: 1, to: 4, weight: 7 },
+            { from: 2, to: 0, weight: 5 },
+            { from: 2, to: 1, weight: 2 },
+            { from: 2, to: 3, weight: 1 },
+            { from: 2, to: 4, weight: 4 },
+            { from: 2, to: 5, weight: 3 },
+            { from: 3, to: 0, weight: 4 },
+            { from: 3, to: 2, weight: 1 },
+            { from: 3, to: 5, weight: 4 },
+            { from: 4, to: 1, weight: 7 },
+            { from: 4, to: 2, weight: 4 },
+            { from: 4, to: 5, weight: 1 },
+            { from: 4, to: 6, weight: 5 },
+            { from: 5, to: 2, weight: 3 },
+            { from: 5, to: 3, weight: 4 },
+            { from: 5, to: 4, weight: 1 },
+            { from: 5, to: 6, weight: 7 },
+            { from: 6, to: 4, weight: 5 },
+            { from: 6, to: 5, weight: 7 }
+        ];
+
+        // Algorithm steps
+        const algorithmSteps = [
+            {
+                title: "Iterasjon 0: Initialisering",
+                description: `
+                    <p>Vi starter med å initialisere alle noder:</p>
+                    <ul>
+                        <li>Startnode 0 får label <span class="highlight">-, 0</span> (kostnad 0)</li>
+                        <li>Alle andre noder får label <span class="highlight">-, ∞</span> (uendelig kostnad)</li>
+                        <li>Sett A (besøkte noder): Tom</li>
+                        <li>Sett D (ubesøkte noder): {0, 1, 2, 3, 4, 5, 6}</li>
+                    </ul>
+                `,
+                nodeUpdates: [],
+                currentNode: null,
+                setA: [],
+                setD: [0, 1, 2, 3, 4, 5, 6]
+            },
+            {
+                title: "Iterasjon 1: Velg Node 0",
+                description: `
+                    <p>Vi velger noden med lavest kostnad fra sett D, som er node 0 (kostnad 0).</p>
+                    <p>Vi sjekker alle naboer til node 0:</p>
+                    <ul>
+                        <li>Node 1: 0 + 2 = 2 (mindre enn ∞, så vi oppdaterer)</li>
+                        <li>Node 2: 0 + 5 = 5 (mindre enn ∞, så vi oppdaterer)</li>
+                        <li>Node 3: 0 + 4 = 4 (mindre enn ∞, så vi oppdaterer)</li>
+                    </ul>
+                    <p>Vi flytter node 0 fra sett D til sett A.</p>
+                `,
+                nodeUpdates: [
+                    { id: 1, cost: 2, predecessor: 0 },
+                    { id: 2, cost: 5, predecessor: 0 },
+                    { id: 3, cost: 4, predecessor: 0 }
+                ],
+                currentNode: 0,
+                setA: [0],
+                setD: [1, 2, 3, 4, 5, 6]
+            },
+            {
+                title: "Iterasjon 2: Velg Node 1",
+                description: `
+                    <p>Vi velger noden med lavest kostnad fra sett D, som er node 1 (kostnad 2).</p>
+                    <p>Vi sjekker alle ubesøkte naboer til node 1:</p>
+                    <ul>
+                        <li>Node 2: 2 + 2 = 4 (mindre enn 5, så vi oppdaterer)</li>
+                        <li>Node 4: 2 + 7 = 9 (mindre enn ∞, så vi oppdaterer)</li>
+                    </ul>
+                    <p>Vi flytter node 1 fra sett D til sett A.</p>
+                `,
+                nodeUpdates: [
+                    { id: 2, cost: 4, predecessor: 1 },
+                    { id: 4, cost: 9, predecessor: 1 }
+                ],
+                currentNode: 1,
+                setA: [0, 1],
+                setD: [2, 3, 4, 5, 6]
+            },
+            {
+                title: "Iterasjon 3: Velg Node 3",
+                description: `
+                    <p>Vi velger noden med lavest kostnad fra sett D, som er node 3 (kostnad 4).</p>
+                    <p>Vi sjekker alle ubesøkte naboer til node 3:</p>
+                    <ul>
+                        <li>Node 5: 4 + 4 = 8 (mindre enn ∞, så vi oppdaterer)</li>
+                    </ul>
+                    <p>Vi flytter node 3 fra sett D til sett A.</p>
+                `,
+                nodeUpdates: [
+                    { id: 5, cost: 8, predecessor: 3 }
+                ],
+                currentNode: 3,
+                setA: [0, 1, 3],
+                setD: [2, 4, 5, 6]
+            },
+            {
+                title: "Iterasjon 4: Velg Node 2",
+                description: `
+                    <p>Vi velger noden med lavest kostnad fra sett D, som er node 2 (kostnad 4).</p>
+                    <p>Vi sjekker alle ubesøkte naboer til node 2:</p>
+                    <ul>
+                        <li>Node 4: 4 + 4 = 8 (mindre enn 9, så vi oppdaterer)</li>
+                        <li>Node 5: 4 + 3 = 7 (mindre enn 8, så vi oppdaterer)</li>
+                    </ul>
+                    <p>Vi flytter node 2 fra sett D til sett A.</p>
+                `,
+                nodeUpdates: [
+                    { id: 4, cost: 8, predecessor: 2 },
+                    { id: 5, cost: 7, predecessor: 2 }
+                ],
+                currentNode: 2,
+                setA: [0, 1, 2, 3],
+                setD: [4, 5, 6]
+            },
+            {
+                title: "Iterasjon 5: Velg Node 5",
+                description: `
+                    <p>Vi velger noden med lavest kostnad fra sett D, som er node 5 (kostnad 7).</p>
+                    <p>Vi sjekker alle ubesøkte naboer til node 5:</p>
+                    <ul>
+                        <li>Node 4: 7 + 1 = 8 (samme som før, ingen oppdatering nødvendig)</li>
+                        <li>Node 6: 7 + 7 = 14 (mindre enn ∞, så vi oppdaterer)</li>
+                    </ul>
+                    <p>Vi flytter node 5 fra sett D til sett A.</p>
+                `,
+                nodeUpdates: [
+                    { id: 6, cost: 14, predecessor: 5 }
+                ],
+                currentNode: 5,
+                setA: [0, 1, 2, 3, 5],
+                setD: [4, 6]
+            },
+            {
+                title: "Iterasjon 6: Velg Node 4",
+                description: `
+                    <p>Vi velger noden med lavest kostnad fra sett D, som er node 4 (kostnad 8).</p>
+                    <p>Vi sjekker alle ubesøkte naboer til node 4:</p>
+                    <ul>
+                        <li>Node 6: 8 + 5 = 13 (mindre enn 14, så vi oppdaterer)</li>
+                    </ul>
+                    <p>Vi flytter node 4 fra sett D til sett A.</p>
+                `,
+                nodeUpdates: [
+                    { id: 6, cost: 13, predecessor: 4 }
+                ],
+                currentNode: 4,
+                setA: [0, 1, 2, 3, 4, 5],
+                setD: [6]
+            },
+            {
+                title: "Iterasjon 7: Velg Node 6",
+                description: `
+                    <p>Vi velger noden med lavest kostnad fra sett D, som er node 6 (kostnad 13).</p>
+                    <p>Dette er vår målnode, så algoritmen er komplett!</p>
+                    <p>Vi flytter node 6 fra sett D til sett A.</p>
+                    <p>Korteste vei fra node 0 til node 6 er: 0 → 1 → 2 → 4 → 6</p>
+                    <p>Total kostnad: 13</p>
+                `,
+                nodeUpdates: [],
+                currentNode: 6,
+                setA: [0, 1, 2, 3, 4, 5, 6],
+                setD: [],
+                finalPath: true
+            }
+        ];
+
+        // Current state
+        let currentStepIndex = 0;
+        let autoRunInterval = null;
+
+        // DOM elements
+        const resetBtn = document.getElementById('resetBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const autoBtn = document.getElementById('autoBtn');
+        const currentStepDiv = document.getElementById('currentStep');
+        const statusTable = document.getElementById('statusTable');
+        const finalPathDiv = document.getElementById('finalPath');
+        const graphContainer = document.getElementById('graph');
+
+        // Function to draw edges
+        function drawEdges() {
+            // Remove existing edges
+            document.querySelectorAll('.edge, .edge-label').forEach(el => el.remove());
+            
+            // Draw new edges
+            edges.forEach(edge => {
+                const fromNode = nodes.find(n => n.id === edge.from);
+                const toNode = nodes.find(n => n.id === edge.to);
+                
+                // Calculate edge parameters
+                const dx = toNode.x - fromNode.x;
+                const dy = toNode.y - fromNode.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                
+                // Create edge
+                const edgeEl = document.createElement('div');
+                edgeEl.className = 'edge';
+                edgeEl.style.width = `${length - 40}px`;
+                edgeEl.style.left = `${fromNode.x + 20}px`;
+                edgeEl.style.top = `${fromNode.y + 20}px`;
+                edgeEl.style.transform = `rotate(${angle}deg)`;
+                
+                // Create edge label
+                const labelEl = document.createElement('div');
+                labelEl.className = 'edge-label';
+                labelEl.textContent = edge.weight;
+                labelEl.style.left = `${fromNode.x + dx / 2}px`;
+                labelEl.style.top = `${fromNode.y + dy / 2}px`;
+                
+                graphContainer.appendChild(edgeEl);
+                graphContainer.appendChild(labelEl);
+            });
+        }
+
+        // Function to update node labels
+        function updateNodeLabels() {
+            // Remove existing labels
+            document.querySelectorAll('.node-label').forEach(el => el.remove());
+            
+            // Create new labels
+            nodes.forEach(node => {
+                const labelEl = document.createElement('div');
+                labelEl.className = 'node-label';
+                
+                if (node.cost === Infinity) {
+                    labelEl.textContent = '-, ∞';
+                } else {
+                    labelEl.textContent = `${node.predecessor !== null ? node.predecessor : '-'}, ${node.cost}`;
+                }
+                
+                labelEl.style.left = `${node.x - 15}px`;
+                labelEl.style.top = `${node.y - 35}px`;
+                
+                graphContainer.appendChild(labelEl);
+            });
+        }
+
+        // Function to update table status
+        function updateTable() {
+            // Clear table except header
+            while (statusTable.rows.length > 1) {
+                statusTable.deleteRow(1);
+            }
+            
+            // Add new rows
+            nodes.forEach(node => {
+                const row = statusTable.insertRow();
+                
+                const cellNode = row.insertCell();
+                cellNode.textContent = node.id;
+                
+                const cellLabel = row.insertCell();
+                if (node.cost === Infinity) {
+                    cellLabel.textContent = '-, ∞';
+                } else {
+                    cellLabel.textContent = `${node.predecessor !== null ? node.predecessor : '-'}, ${node.cost}`;
+                }
+                
+                const cellStatus = row.insertCell();
+                if (algorithmSteps[currentStepIndex].setA.includes(node.id)) {
+                    cellStatus.textContent = 'Besøkt';
+                    cellStatus.style.backgroundColor = '#ffcccc';
+                } else {
+                    cellStatus.textContent = 'Ubesøkt';
+                }
+                
+                // Highlight current node
+                if (node.id === algorithmSteps[currentStepIndex].currentNode) {
+                    row.style.backgroundColor = '#e6ffe6';
+                    cellStatus.textContent = 'Nåværende';
+                    cellStatus.style.backgroundColor = '#ccffcc';
+                }
+            });
+        }
+
+        // Function to update node styling
+        function updateNodeStyling() {
+            // Reset all nodes
+            document.querySelectorAll('.node').forEach(el => {
+                el.classList.remove('visited', 'current', 'path');
+            });
+            
+            // Update based on current step
+            const step = algorithmSteps[currentStepIndex];
+            
+            // Mark visited nodes
+            step.setA.forEach(nodeId => {
+                document.getElementById(`node${nodeId}`).classList.add('visited');
+            });
+            
+            // Mark current node
+            if (step.currentNode !== null) {
+                document.getElementById(`node${step.currentNode}`).classList.add('current');
+            }
+            
+            // Highlight final path
+            if (step.finalPath) {
+                let current = 6; // End node
+                while (current !== null) {
+                    document.getElementById(`node${current}`).classList.add('path');
+                    const node = nodes.find(n => n.id === current);
+                    current = node.predecessor;
+                }
+            }
+        }
+
+        // Function to update the current step
+        function updateStep() {
+            const step = algorithmSteps[currentStepIndex];
+            
+            // Update step display
+            currentStepDiv.innerHTML = `
+                <div class="step-title">${step.title}</div>
+                ${step.description}
+            `;
+            
+            // Apply node updates from this step
+            step.nodeUpdates.forEach(update => {
+                const node = nodes.find(n => n.id === update.id);
+                node.cost = update.cost;
+                node.predecessor = update.predecessor;
+            });
+            
+            // Update UI
+            updateNodeLabels();
+            updateNodeStyling();
+            updateTable();
+            
+            // Show/hide final path
+            finalPathDiv.style.display = step.finalPath ? 'block' : 'none';
+            
+            // Update button states
+            prevBtn.disabled = currentStepIndex === 0;
+            nextBtn.disabled = currentStepIndex === algorithmSteps.length - 1;
+        }
+
+        // Function to reset the visualization
+        function resetVisualization() {
+            // Reset nodes
+            nodes.forEach(node => {
+                node.cost = node.id === 0 ? 0 : Infinity;
+                node.status = 'unvisited';
+                node.predecessor = null;
+            });
+            
+            currentStepIndex = 0;
+            updateStep();
+            
+            // Stop auto-run if active
+            if (autoRunInterval) {
+                clearInterval(autoRunInterval);
+                autoRunInterval = null;
+                autoBtn.textContent = 'Auto-Kjør';
+            }
+        }
+
+        // Function to go to the next step
+        function nextStep() {
+            if (currentStepIndex < algorithmSteps.length - 1) {
+                currentStepIndex++;
+                updateStep();
+            }
+        }
+
+        // Function to go to the previous step
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                
+                // Reset node state
+                resetVisualization();
+                
+                // Apply all updates up to the current step
+                for (let i = 0; i <= currentStepIndex; i++) {
+                    algorithmSteps[i].nodeUpdates.forEach(update => {
+                        const node = nodes.find(n => n.id === update.id);
+                        node.cost = update.cost;
+                        node.predecessor = update.predecessor;
+                    });
+                }
+                
+                updateStep();
+            }
+        }
+
+        // Function to toggle auto-run
+        function toggleAutoRun() {
+            if (autoRunInterval) {
+                clearInterval(autoRunInterval);
+                autoRunInterval = null;
+                autoBtn.textContent = 'Auto-Kjør';
+            } else {
+                autoRunInterval = setInterval(() => {
+                    if (currentStepIndex < algorithmSteps.length - 1) {
+                        nextStep();
+                    } else {
+                        clearInterval(autoRunInterval);
+                        autoRunInterval = null;
+                        autoBtn.textContent = 'Auto-Kjør';
+                    }
+                }, 2000);
+                autoBtn.textContent = 'Stopp Auto';
+            }
+        }
+
+        // Set up event listeners
+        resetBtn.addEventListener('click', resetVisualization);
+        prevBtn.addEventListener('click', prevStep);
+        nextBtn.addEventListener('click', nextStep);
+        autoBtn.addEventListener('click', toggleAutoRun);
+
+        // Initialize the visualization
+        drawEdges();
+        updateNodeLabels();
+        updateStep();
+    </script>
+</body>
+</html>
