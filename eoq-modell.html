@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EOQ-modellen: Pedagogisk Gjennomgang</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --background-color: #f8f9fa;
+            --text-color: #333;
+            --card-color: white;
+            --highlight-color: #f1c40f;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .container {
+            position: relative;
+            min-height: 550px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background-color: var(--card-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        
+        h1, h2, h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+        
+        h1 {
+            font-size: 28px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h2 {
+            font-size: 24px;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        h3 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .step {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .step.active {
+            display: block;
+        }
+        
+        .formula {
+            background-color: #f1f8ff;
+            border-left: 4px solid var(--accent-color);
+            padding: 10px 15px;
+            margin: 15px 0;
+            font-family: 'Cambria Math', Georgia, serif;
+            font-size: 18px;
+        }
+        
+        .highlight {
+            background-color: rgba(241, 196, 15, 0.2);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        .note {
+            background-color: #e8f4f8;
+            border-left: 4px solid #34ace0;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s ease;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .progress-bar-container {
+            width: 100%;
+            height: 10px;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--accent-color);
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+        
+        .two-column {
+            display: flex;
+            gap: 30px;
+            margin: 20px 0;
+        }
+        
+        .column {
+            flex: 1;
+        }
+        
+        .visualization {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            text-align: center;
+        }
+        
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        
+        .step-indicator {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .icon {
+            font-size: 24px;
+            vertical-align: middle;
+            margin-right: 10px;
+            color: var(--accent-color);
+        }
+        
+        .definition {
+            background-color: #f0f7ff;
+            border: 1px solid #d0e3ff;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .definition h4 {
+            margin-top: 0;
+            color: var(--accent-color);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>EOQ-modellen: Økonomisk Bestillingskvantum</h1>
+    
+    <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <div class="step-indicator" id="stepIndicator">Steg 1 av 7</div>
+    
+    <div class="container" id="stepContainer">
+        <!-- Step 1: Introduction -->
+        <div class="step active" id="step1">
+            <div class="card">
+                <h2>Introduksjon til EOQ-modellen</h2>
+                
+                <p>
+                    <strong class="icon">📦</strong>
+                    Economic Order Quantity (EOQ) eller <span class="highlight">Økonomisk Bestillingskvantum</span> er en 
+                    modell som hjelper bedrifter med å bestemme hvor mye de skal bestille hver gang 
+                    for å minimere totale kostnader.
+                </p>
+                
+                <div class="definition">
+                    <h4>Hva er EOQ?</h4>
+                    <p>
+                        EOQ er det optimale antall enheter som bør bestilles for å minimere den 
+                        totale kostnaden forbundet med innkjøp, levering og lagring av varer. 
+                        Modellen ble utviklet av Ford W. Harris i 1913 og er en av de mest kjente 
+                        formlene innen økonomi og logistikk.
+                    </p>
+                </div>
+                
+                <h3>Grunnleggende problem</h3>
+                <p>
+                    Når du driver en bedrift, står du overfor følgende dilemma:
+                </p>
+                
+                <div class="two-column">
+                    <div class="column">
+                        <p><strong>Bestille sjelden, store mengder:</strong></p>
+                        <ul>
+                            <li>✅ Færre bestillinger (lavere bestillingskostnader)</li>
+                            <li>⛔ Større lager (høyere lagerholdskostnader)</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <p><strong>Bestille ofte, små mengder:</strong></p>
+                        <ul>
+                            <li>✅ Mindre lager (lavere lagerholdskostnader)</li>
+                            <li>⛔ Flere bestillinger (høyere bestillingskostnader)</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <p>
+                    EOQ-modellen gir en <span class="highlight">matematisk løsning</span> på dette dilemmaet 
+                    ved å finne det nøyaktige bestillingskvantum som minimerer de totale kostnadene.
+                </p>
+                
+                <div class="note">
+                    <p>
+                        <strong>Viktig:</strong> EOQ-modellen bygger på en rekke forutsetninger som 
+                        forenkler virkeligheten. Disse skal vi se nærmere på i neste steg.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="nav-buttons">
+                <button disabled>Forrige</button>
+                <button id="nextBtn">Neste</button>
+            </div>
+        </div>
+        
+        <!-- Step 2: Assumptions -->
+        <div class="step" id="step2">
+            <div class="card">
+                <h2>Forutsetninger for EOQ-modellen</h2>
+                
+                <p>
+                    <strong class="icon">⚠️</strong>
+                    Som alle økonomiske modeller, bygger EOQ-modellen på en rekke forutsetninger. 
+                    Disse forenklingene gjør det mulig å utlede en elegant matematisk løsning, 
+                    men det betyr også at vi må være klar over modellens begrensninger.
+                </p>
+                
+                <h3>Hovedforutsetninger:</h3>
+                
+                <table>
+                    <tr>
+                        <th>Forutsetning</th>
+                        <th>Beskrivelse</th>
+                    </tr>
+                    <tr>
+                        <td>1. Konstant etterspørsel</td>
+                        <td>Etterspørselen (d) er kjent, konstant og jevn over tid</td>
+                    </tr>
+                    <tr>
+                        <td>2. Ingen ledetid</td>
+                        <td>Varer ankommer umiddelbart etter bestilling (ingen ventetid)</td>
+                    </tr>
+                    <tr>
+                        <td>3. Ingen tillatte mangler</td>
+                        <td>Lagernivået kan aldri bli negativt (ingen tomme hyller)</td>
+                    </tr>
+                    <tr>
+                        <td>4. Faste bestillingskostnader</td>
+                        <td>Hver bestilling har en fast kostnad (K) uavhengig av mengde</td>
+                    </tr>
+                    <tr>
+                        <td>5. Konstant lagerholdskostnad</td>
+                        <td>Lagerholdskostnaden (h) er konstant per enhet per tidsenhet</td>
+                    </tr>
+                </table>
+                
+                <div class="visualization">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iMzAwIj4KICAgIDwhLS0gQXhlcyAtLT4KICAgIDxsaW5lIHgxPSI1MCIgeTE9IjI1MCIgeDI9IjU1MCIgeTI9IjI1MCIgc3Ryb2tlPSIjMzMzIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxsaW5lIHgxPSI1MCIgeTE9IjUwIiB4Mj0iNTAiIHkyPSIyNTAiIHN0cm9rZT0iIzMzMyIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgICAKICAgIDwhLS0gQXhpcyBsYWJlbHMgLS0+CiAgICA8dGV4dCB4PSIzMDAiIHk9IjI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0Ij5UaWQ8L3RleHQ+CiAgICA8dGV4dCB4PSIyMCIgeT0iMTUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIHRyYW5zZm9ybT0icm90YXRlKC05MCwgMjAsIDE1MCkiPkxhZ2Vybml2w6U8L3RleHQ+CiAgICAKICAgIDwhLS0gTGFnZXJzaWtsZXIgLS0+CiAgICA8cG9seWxpbmUgcG9pbnRzPSI1MCw1MCAxNTAsMjUwIDE1MCwyNTAgMTUwLDUwIDI1MCwyNTAgMjUwLDI1MCAyNTAsNTAgMzUwLDI1MCAzNTAsMjUwIDM1MCw1MCA0NTAsMjUwIiBmaWxsPSJub25lIiBzdHJva2U9IiMzNDk4ZGIiIHN0cm9rZS13aWR0aD0iMyIvPgogICAgCiAgICA8IS0tIFBvaW50cyBvZiBvcmRlciAtLT4KICAgIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjUiIGZpbGw9IiNlNzRjM2MiLz4KICAgIDxjaXJjbGUgY3g9IjE1MCIgY3k9IjUwIiByPSI1IiBmaWxsPSIjZTc0YzNjIi8+CiAgICA8Y2lyY2xlIGN4PSIyNTAiIGN5PSI1MCIgcj0iNSIgZmlsbD0iI2U3NGMzYyIvPgogICAgPGNpcmNsZSBjeD0iMzUwIiBjeT0iNTAiIHI9IjUiIGZpbGw9IiNlNzRjM2MiLz4KICAgIAogICAgPCEtLSBRIGxhYmVsIC0tPgogICAgPHRleHQgeD0iODAiIHk9IjQwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiPjE8L3RleHQ+CiAgICA8dGV4dCB4PSIxMDAiIHk9IjE1MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiBmaWxsPSIjMzQ5OGRiIj5RPC90ZXh0PgogICAgCiAgICA8IS0tIEN5Y2xlIGxhYmVscyAtLT4KICAgIDx0ZXh0IHg9IjEwMCIgeT0iMjcwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiPkN5a2VsIDE8L3RleHQ+CiAgICA8dGV4dCB4PSIyMDAiIHk9IjI3MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIj5DeWtlbCAyPC90ZXh0PgogICAgPHRleHQgeD0iMzAwIiB5PSIyNzAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiI+Q3lrZWwgMzwvdGV4dD4KICAgIDx0ZXh0IHg9IjQwMCIgeT0iMjcwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiPkN5a2VsIDQ8L3RleHQ+CiAgICAKICAgIDwhLS0gQ3ljbGUgdGltZSAtLT4KICAgIDx0ZXh0IHg9IjEwMCIgeT0iMjkwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiPlEvZDwvdGV4dD4KPC9zdmc+Cg==" alt="Lagernivå over tid med EOQ-modellen">
+                    <p><em>Lagernivå over tid med EOQ-modellen</em></p>
+                </div>
+                
+                <div class="note">
+                    <p>
+                        <strong>Hva betyr dette i praksis?</strong> Modellen fungerer best for 
+                        varer med stabil etterspørsel, korte leveringstider, og betydelige bestillingskostnader. 
+                        Eksempler er basisvarer i dagligvarebutikker, standard råmaterialer i 
+                        produksjon, eller kontorrekvisita.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="nav-buttons">
+                <button id="prevBtn2">Forrige</button>
+                <button id="nextBtn2">Neste</button>
+            </div>
+        </div>
+        
+        <!-- Step 3: Key Variables -->
+        <div class="step" id="step3">
+            <div class="card">
+                <h2>Nøkkelvariabler i EOQ-modellen</h2>
+                
+                <p>
+                    <strong class="icon">🔢</strong>
+                    For å forstå og bruke EOQ-modellen, må vi først identifisere 
+                    nøkkelvariablene som inngår i beregningene.
+                </p>
+                
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Inputvariabler:</h3>
+                        <ul>
+                            <li><strong>d</strong> = Etterspørselsrate (enheter per år)</li>
+                            <li><strong>K</strong> = Bestillingskostnad (kr per bestilling)</li>
+                            <li><strong>h</strong> = Lagerholdskostnad (kr per enhet per år)</li>
+                        </ul>
+                        
+                        <h3>Beslutningsvariabel:</h3>
+                        <ul>
+                            <li><strong>Q</strong> = Bestillingskvantum (enheter)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column">
+                        <div class="definition">
+                            <h4>Bestillingskostnad (K)</h4>
+                            <p>
+                                Dette er den faste kostnaden forbundet med å plassere og motta en bestilling, 
+                                uavhengig av størrelsen på bestillingen. Den inkluderer:
+                                <ul>
+                                    <li>Administrative kostnader for å plassere bestillingen</li>
+                                    <li>Transportkostnader</li>
+                                    <li>Mottakskostnader</li>
+                                    <li>Kvalitetskontroll ved mottak</li>
+                                </ul>
+                            </p>
+                        </div>
+                        
+                        <div class="definition">
+                            <h4>Lagerholdskostnad (h)</h4>
+                            <p>
+                                Dette er kostnaden ved å holde en enhet på lager i ett år. Den inkluderer:
+                                <ul>
+                                    <li>Kapitalkostnad (alternativkostnad)</li>
+                                    <li>Lagerplass og fasiliteter</li>
+                                    <li>Forsikring</li>
+                                    <li>Svinn, foreldelse og forringelse</li>
+                                </ul>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Viktige begreper:</h3>
+                
+                <ul>
+                    <li><strong>Sykel</strong> = Tid mellom hver bestilling = Q/d</li>
+                    <li><strong>Gjennomsnittlig lagernivå</strong> = Q/2</li>
+                    <li><strong>Bestillingskostnad per år</strong> = K · (d/Q)</li>
+                    <li><strong>Lagerholdskostnad per år</strong> = h · (Q/2)</li>
+                </ul>
+                
+                <div class="note">
+                    <p>
+                        En av de sentrale innsiktene i EOQ-modellen er at det <span class="highlight">gjennomsnittlige lagernivået</span> 
+                        er halvparten av bestillingskvantum (Q/2). Dette følger av at lagernivået starter på Q etter en leveranse 
+                        og synker lineært til 0 før neste leveranse.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="nav-buttons">
+                <button id="prevBtn3">Forrige</button>
+                <button id="nextBtn3">Neste</button>
+            </div>
+        </div>
+        
+        <!-- Step 4: Cost Components -->
+        <div class="step" id="step4">
+            <div class="card">
+                <h2>Kostnadskomponenter</h2>
+                
+                <p>
+                    <strong class="icon">💰</strong>
+                    EOQ-modellen balanserer to hovedtyper kostnader: bestillingskostnader og lagerholdskostnader. 
+                    La oss se på hvordan disse beregnes og hvordan de påvirkes av bestillingskvantum (Q).
+                </p>
+                
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Bestillingskostnad per år</h3>
+                        <p>
+                            Årlig bestillingskostnad beregnes som bestillingskostnad per bestilling (K) multiplisert 
+                            med antall bestillinger per år (d/Q):
+                        </p>
+                        <div class="formula">
+                            Bestillingskostnad per år = K · d/Q
+                        </div>
+                        <p>
+                            <strong>Merk:</strong> Når Q øker, vil antall bestillinger per år reduseres, 
+                            og dermed vil den årlige bestillingskostnaden synke.
+                        </p>
+                    </div>
+                    
+                    <div class="column">
+                        <h3>Lagerholdskostnad per år</h3>
+                        <p>
+                            Årlig lagerholdskostnad beregnes som lagerholdskostnad per enhet per år (h) multiplisert 
+                            med gjennomsnittlig antall enheter på lager (Q/2):
+                        </p>
+                        <div class="formula">
+                            Lagerholdskostnad per år = h · Q/2
+                        </div>
+                        <p>
+                            <strong>Merk:</strong> Når Q øker, vil gjennomsnittlig lagernivå øke, 
+                            og dermed vil den årlige lagerholdskostnaden øke.
+                        </p>
+                    </div>
+                </div>
+                
+                <h3>Total årlig kostnad</h3>
+                <p>
+                    Den totale årlige kostnaden (T) er summen av årlig bestillingskostnad og årlig lagerholdskostnad:
+                </p>
+                <div class="formula">
+                    T = K · d/Q + h · Q/2
+                </div>
+                
+                <div class="visualization">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iMzUwIj4KICAgIDwhLS0gQXhlcyAtLT4KICAgIDxsaW5lIHgxPSI1MCIgeTE9IjI1MCIgeDI9IjU1MCIgeTI9IjI1MCIgc3Ryb2tlPSIjMzMzIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxsaW5lIHgxPSI1MCIgeTE9IjUwIiB4Mj0iNTAiIHkyPSIyNTAiIHN0cm9rZT0iIzMzMyIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgICAKICAgIDwhLS0gQXhpcyBsYWJlbHMgLS0+CiAgICA8dGV4dCB4PSIzMDAiIHk9IjI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0Ij5CZXN0aWxsaW5nc2t2YW50dW0gKFEpPC90ZXh0PgogICAgPHRleHQgeD0iMjAiIHk9IjE1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiB0cmFuc2Zvcm09InJvdGF0ZSgtOTAsIDIwLCAxNTApIj5Lb3N0bmFkPC90ZXh0PgogICAgCiAgICA8IS0tIFE9MjAwIC0tPgogICAgPGxpbmUgeDE9IjIwMCIgeTE9IjI1MCIgeDI9IjIwMCIgeTI9IjI2MCIgc3Ryb2tlPSIjMzMzIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDx0ZXh0IHg9IjIwMCIgeT0iMjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiPlEqPC90ZXh0PgogICAgCiAgICA8IS0tIENvc3QgY3VydmVzIC0tPgogICAgPCEtLSBPcmRlcmluZyBjb3N0IGN1cnZlIC0tPgogICAgPHBhdGggZD0iTSA1MCw3MCBRIDE1MCwxNTAgMzAwLDIwMCBUIDU1MCwyMzAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2U3NGMzYyIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtZGFzaGFycmF5PSI1LDUiLz4KICAgIDx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiNlNzRjM2MiPkJlc3RpbGxpbmdza29zdG5hZDogSyDCtyBkL1E8L3RleHQ+CiAgICAKICAgIDwhLS0gSG9sZGluZyBjb3N0IGN1cnZlIC0tPgogICAgPHBhdGggZD0iTSA1MCwyNDAgUSAxNTAsMjIwIDMwMCwxNzAgVCA1NTAsNzAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJlY2M3MSIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtZGFzaGFycmF5PSI1LDUiLz4KICAgIDx0ZXh0IHg9IjQwMCIgeT0iMTMwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMyZWNjNzEiPkxhZ2VyaG9sZHNrb3N0bmFkOiBoIMK3IFEvMjwvdGV4dD4KICAgIAogICAgPCEtLSBUb3RhbCBjb3N0IGN1cnZlIC0tPgogICAgPHBhdGggZD0iTSA1MCwxNjAgUSAxMDAsMTMwIDE1MCwxMTUgVCAyMDAsMTEwIFQgMjUwLDExNSBUIDMwMCwxMjAgVCAzNTAsMTMwIFQgNDAwLDE0MCBUIDU1MCwxODAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzM0OThkYiIgc3Ryb2tlLXdpZHRoPSI0Ii8+CiAgICA8dGV4dCB4PSIzMDAiIHk9IjkwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiMzNDk4ZGIiPlRvdGFsIGtvc3RuYWQ6IEsgwrcgZC9RICsgaCDCtyBRLzI8L3RleHQ+CiAgICAKICAgIDwhLS0gT3B0aW1hbCBRIHBvaW50IC0tPgogICAgPGNpcmNsZSBjeD0iMjAwIiBjeT0iMTEwIiByPSI2IiBmaWxsPSIjZjFjNDBmIiBzdHJva2U9IiMzMzMiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHRleHQgeD0iMjIwIiB5PSIxMDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCI+TWluaW11bXNwdW5rdDwvdGV4dD4KICAgIAogICAgPCEtLSBFcXVhbCBjb3N0cyBhdCBvcHRpbWFsIHBvaW50IC0tPgogICAgPGxpbmUgeDE9IjIwMCIgeTE9IjExMCIgeDI9IjIwMCIgeTI9IjE3MCIgc3Ryb2tlPSIjMzMzIiBzdHJva2Utd2lkdGg9IjEiIHN0cm9rZS1kYXNoYXJyYXk9IjIsMiIvPgogICAgPGNpcmNsZSBjeD0iMjAwIiBjeT0iMTcwIiByPSI0IiBmaWxsPSIjZTc0YzNjIi8+CiAgICA8Y2lyY2xlIGN4PSIyMDAiIGN5PSIxNzAiIHI9IjQiIGZpbGw9IiMyZWNjNzEiLz4KICAgIDx0ZXh0IHg9IjIzMCIgeT0iMTcwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiPkJlc3RpbGxpbmdza29zdG5hZCA9IExhZ2VyaG9sZHNrb3N0bmFkPC90ZXh0PgogICAgCiAgICA8IS0tIExlZ2VuZCAtLT4KICAgIDxyZWN0IHg9IjUwIiB5PSIzMDAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIzIiBmaWxsPSIjZTc0YzNjIiBzdHJva2UtZGFzaGFycmF5PSI1LDUiIHN0cm9rZT0iI2U3NGMzYyIgc3Ryb2tlLXdpZHRoPSIzIi8+CiAgICA8dGV4dCB4PSI3NSIgeT0iMzA1IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiPkJlc3RpbGxpbmdza29zdG5hZDwvdGV4dD4KICAgIAogICAgPHJlY3QgeD0iMjAwIiB5PSIzMDAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIzIiBmaWxsPSIjMmVjYzcxIiBzdHJva2UtZGFzaGFycmF5PSI1LDUiIHN0cm9rZT0iIzJlY2M3MSIgc3Ryb2tlLXdpZHRoPSIzIi8+CiAgICA8dGV4dCB4PSIyMjUiIHk9IjMwNSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIj5MYWdlcmhvbGRza29zdG5hZDwvdGV4dD4KICAgIAogICAgPHJlY3QgeD0iMzUwIiB5PSIzMDAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIzIiBmaWxsPSJub25lIiBzdHJva2U9IiMzNDk4ZGIiIHN0cm9rZS13aWR0aD0iNCIvPgogICAgPHRleHQgeD0iMzc1IiB5PSIzMDUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiI+VG90YWwga29zdG5hZDwvdGV4dD4KPC9zdmc+Cg==" alt="Kostnadskomponenter i EOQ-modellen">
+                    <p><em>Kostnadskomponenter i EOQ-modellen</em></p>
+                </div>
+                
+                <div class="note">
+                    <p>
+                        <strong>Viktig innsikt:</strong> Legg merke til at når bestillingskvantum (Q) øker, 
+                        vil bestillingskostnaden synke (hyperbel-formet kurve), mens lagerholdskostnaden 
+                        øker (lineær kurve). Den totale kostnaden har derfor en U-formet kurve med 
+                        ett minimumspunkt - det optimale bestillingskvantum (Q*).
+                    </p>
+                </div>
+            </div>
+            
+            <div class="nav-buttons">
+                <button id="prevBtn4">Forrige</button>
+                <button id="nextBtn4">Neste</button>
+            </div>
+        </div>
+        
+        <!-- Step 5: Deriving the EOQ Formula -->
+        <div class="step" id="step5">
+            <div class="card">
+                <h2>Utledning av EOQ-formelen</h2>
+                
+                <p>
+                    <strong class="icon">📊</strong>
+                    For å finne det optimale bestillingskvantum (Q*), bruker vi kalkulus 
+                    til å finne minimumspunktet på den totale kostnadskurven.
+                </p>
+                
+                <h3>Steg i utledningen:</h3>
+                
+                <ol>
+                    <li>
+                        <p>Vi starter med den totale kostnadsfunksjonen:</p>
+                        <div class="formula">
+                            T = K · d/Q + h · Q/2
+                        </div>
+                    </li>
+                    <li>
+                        <p>For å finne minimumspunktet, deriverer vi T med hensyn på Q og setter lik null:</p>
+                        <div class="formula">
+                            dT/dQ = -K·d/Q² + h/2 = 0
+                        </div>
+                    </li>
+                    <li>
+                        <p>Løser for Q:</p>
+                        <div class="formula">
+                            K·d/Q² = h/2
+                        </div>
+                        <div class="formula">
+                            Q² = 2·K·d/h
+                        </div>
+                        <div class="formula">
+                            Q* = √(2·K·d/h)
+                        </div>
+                    </li>
+                </ol>
+                
+                <div class="definition">
+                    <h4>EOQ-formelen:</h4>
+                    <div class="formula">
+                        Q* = √(2·K·d/h)
+                    </div>
+                    <p>
+                        Dette er den klassiske formelen for økonomisk bestillingskvantum (EOQ), 
+                        som gir det optimale bestillingskvantum som minimerer totale kostnader.
+                    </p>
+                </div>
+                
+                <h3>En spesiell egenskap ved det optimale bestillingskvantum</h3>
+                <p>
+                    Ved det optimale bestillingskvantum (Q*) er bestillingskostnaden og 
+                    lagerholdskostnaden <span class="highlight">nøyaktig like store</span>:
+                </p>
+                <div class="formula">
+                    K · d/Q* = h · Q*/2
+                </div>
+                <p>
+                    Dette er en viktig innsikt som kan brukes som en rask sjekk på om beregnet 
+                    Q* er riktig. Hvis det beregnes riktig, vil de to kostnadskomponentene være like.
+                </p>
+                
+                <div class="note">
+                    <p>
+                        <strong>Praktisk betydning:</strong> EOQ-formelen viser at optimalt 
+                        bestillingskvantum:
+                        <ul>
+                            <li>Øker med kvadratroten av bestillingskostnaden (K)</li>
+                            <li>Øker med kvadratroten av etterspørselen (d)</li>
+                            <li>Reduseres med kvadratroten av lagerholdskostnaden (h)</li>
+                        </ul>
+                        Dette gir intuitivt mening: Høyere bestillingskostnader eller høyere 
+                        etterspørsel tilsier større bestillinger, mens høyere lagerholdskostnader 
+                        tilsier mindre bestillinger.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="nav-buttons">
+                <button id="prevBtn5">Forrige</button>
+                <button id="nextBtn5">Neste</button>
+            </div>
+        </div>
+        
+        <!-- Step 6: Practical Examples -->
+        <div class="step" id="step6">
+            <div class="card">
+                <h2>Praktiske eksempler</h2>
+                
+                <p>
+                    <strong class="icon">🧮</strong>
+                    La oss anvende EOQ-formelen på to konkrete eksempler for å se hvordan den fungerer i praksis.
+                </p>
+                
+                <h3>Eksempel 1: Produksjonsbedrift</h3>
+                <div class="definition">
+                    <h4>Gitt:</h4>
+                    <ul>
+                        <li>Bestillingskostnad (K) = 12 000 kr</li>
+                        <li>Lagerholdskostnad (h) = 0,30 kr per enhet per år</li>
+                        <li>Årlig etterspørsel (d) = 8 000 enheter</li>
+                    </ul>
+                    
+                    <h4>Løsning:</h4>
+                    <div class="formula">
+                        Q* = √(2·K·d/h) = √(2·12 000·8 000/0,30) = √(640 000 000) = 25 298 enheter
+                    </div>
+                    
+                    <h4>Verifisering:</h4>
+                    <p>Sjekker om bestillingskostnad = lagerholdskostnad ved Q*:</p>
+                    <div class="formula">
+                        Bestillingskostnad: K·d/Q* = 12 000·8 000/25 298 = 3 795 kr
+                    </div>
+                    <div class="formula">
+                        Lagerholdskostnad: h·Q*/2 = 0,30·25 298/2 = 3 795 kr
+                    </div>
+                    <p>De to kostnadskomponentene er like, så beregningen er korrekt.</p>
+                    
+                    <h4>Resultat:</h4>
+                    <ul>
+                        <li>Optimalt bestillingskvantum: 25 298 enheter</li>
+                        <li>Antall bestillinger per år: d/Q* = 8 000/25 298 = 0,32 (ca. hver tredje måned)</li>
+                        <li>Total årlig kostnad: 2·K·d/Q* = 2·3 795 = 7 590 kr</li>
+                    </ul>
+                </div>
+                
+                <h3>Eksempel 2: Grossist</h3>
+                <div class="definition">
+                    <h4>Gitt:</h4>
+                    <ul>
+                        <li>Bestillingskostnad (K) = 200 kr</li>
+                        <li>Lagerholdskostnad (h) = 1,0 kr per enhet per år</li>
+                        <li>Årlig etterspørsel (d) = 8 000 enheter</li>
+                    </ul>
+                    
+                    <h4>Løsning:</h4>
+                    <div class="formula">
+                        Q* = √(2·K·d/h) = √(2·200·8 000/1,0) = √(3 200 000) = 1 789 enheter
+                    </div>
+                    
+                    <h4>Resultat:</h4>
+                    <ul>
+                        <li>Optimalt bestillingskvantum: 1 789 enheter</li>
+                        <li>Antall bestillinger per år: d/Q* = 8 000/1 789 = 4,5 (ca. 4-5 ganger per måned)</li>
+                        <li>Total årlig kostnad: 2·K·d/Q* = 2·(200·8 000/1 789) = 2·895 = 1 790 kr</li>
+                    </ul>
+                </div>
+                
+                <h3>Sammenligning av eksemplene</h3>
+                <p>
+                    Legg merke til interessante forskjeller mellom de to eksemplene:
+                </p>
+                <ul>
+                    <li>
+                        <strong>Produksjonsbedriften</strong> har høye bestillingskostnader (K) og lave 
+                        lagerholdskostnader (h), noe som resulterer i <span class="highlight">store, sjeldne bestillinger</span>.
+                    </li>
+                    <li>
+                        <strong>Grossisten</strong> har lave bestillingskostnader (K) og høyere 
+                        lagerholdskostnader (h), noe som resulterer i <span class="highlight">små, hyppige bestillinger</span>.
+                    </li>
+                </ul>
+                
+                <div class="note">
+                    <p>
+                        <strong>Praktisk innsikt:</strong> Dette illustrerer hvordan ulike virksomheter 
+                        med ulike kostnadsstrukturer vil ha forskjellige optimale bestillingskvanta. 
+                        For bedrifter med høye bestillingskostnader (f.eks. produksjonsbedrifter med 
+                        betydelige omstillingskostnader) er større bestillinger optimalt, mens for 
+                        bedrifter med lavere bestillingskostnader og høyere lagerholdskostnader 
+                        (f.eks. grossister med begrenset lagerplass) er mindre, hyppigere bestillinger optimalt.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="nav-buttons">
+                <button id="prevBtn6">Forrige</button>
+                <button id="nextBtn6">Neste</button>
+            </div>
+        </div>
+        
+        <!-- Step 7: Summary and Conclusion -->
+        <div class="step" id="step7">
+            <div class="card">
+                <h2>Oppsummering og konklusjon</h2>
+                
+                <p>
+                    <strong class="icon">📝</strong>
+                    EOQ-modellen er et kraftig verktøy for å optimalisere lagerstyring og bestillingspolitikk. 
+                    La oss oppsummere de viktigste punktene.
+                </p>
+                
+                <h3>Nøkkelinnsikter fra EOQ-modellen:</h3>
+                
+                <ol>
+                    <li>
+                        <p><strong>Optimal balanse:</strong> EOQ-modellen finner den optimale balansen mellom 
+                        bestillingskostnader og lagerholdskostnader, som minimerer totale kostnader.</p>
+                    </li>
+                    <li>
+                        <p><strong>Likhet ved optimal Q:</strong> Ved det optimale bestillingskvantum (Q*) 
+                        er bestillingskostnaden nøyaktig lik lagerholdskostnaden.</p>
+                    </li>
+                    <li>
+                        <p><strong>EOQ-formelen:</strong> Det optimale bestillingskvantum beregnes som:</p>
+                        <div class="formula">
+                            Q* = √(2·K·d/h)
+                        </div>
+                    </li>
+                    <li>
+                        <p><strong>Kostnadspåvirkning:</strong> Optimalt bestillingskvantum (Q*) øker med 
+                        bestillingskostnad (K) og etterspørsel (d), og reduseres med lagerholdskostnad (h).</p>
+                    </li>
+                </ol>
+                
+                <h3>Fordeler og begrensninger:</h3>
+                
+                <div class="two-column">
+                    <div class="column">
+                        <h4>Fordeler:</h4>
+                        <ul>
+                            <li>Enkel å anvende og forstå</li>
+                            <li>Krever relativt få inputvariabler</li>
+                            <li>Gir en klar matematisk løsning</li>
+                            <li>Fungerer godt for standardvarer med stabil etterspørsel</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column">
+                        <h4>Begrensninger:</h4>
+                        <ul>
+                            <li>Forutsetter konstant, kjent etterspørsel</li>
+                            <li>Tar ikke hensyn til ledetid</li>
+                            <li>Ikke egnet for sesongavhengige varer</li>
+                            <li>Tar ikke hensyn til kvantumsrabatter</li>
+                            <li>Forutsetter ubegrenset lagerplass</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h3>Praktisk anvendelse:</h3>
+                <p>
+                    EOQ-modellen er spesielt nyttig for:
+                </p>
+                <ul>
+                    <li>Basisvarer med stabil etterspørsel</li>
+                    <li>Standardkomponenter i produksjon</li>
+                    <li>Lagerstyring av reservedeler</li>
+                    <li>Kontorrekvisita og forbruksmateriell</li>
+                </ul>
+                
+                <div class="note">
+                    <p>
+                        <strong>Videre utvikling:</strong> For mer komplekse situasjoner finnes det 
+                        utvidelser av EOQ-modellen som tar hensyn til faktorer som ledetid, 
+                        kvantumsrabatter, flere produkter med begrensninger, og variabel etterspørsel. 
+                        Det finnes også mer avanserte lagerstyringsmodeller som tar hensyn til 
+                        usikkerhet i etterspørsel og ledetid.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="nav-buttons">
+                <button id="prevBtn7">Forrige</button>
+                <button disabled>Neste</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // DOM elements
+        const stepContainer = document.getElementById('stepContainer');
+        const progressBar = document.getElementById('progressBar');
+        const stepIndicator = document.getElementById('stepIndicator');
+        
+        // Steps
+        const steps = document.querySelectorAll('.step');
+        const totalSteps = steps.length;
+        let currentStep = 1;
+        
+        // Update progress bar
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            progressBar.style.width = `${progress}%`;
+            stepIndicator.textContent = `Steg ${currentStep} av ${totalSteps}`;
+        }
+        
+        // Show step
+        function showStep(stepNumber) {
+            // Hide all steps
+            steps.forEach(step => {
+                step.classList.remove('active');
+            });
+            
+            // Show current step
+            steps[stepNumber - 1].classList.add('active');
+            
+            // Update progress
+            currentStep = stepNumber;
+            updateProgress();
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Event listeners for navigation buttons
+        document.getElementById('nextBtn').addEventListener('click', () => showStep(2));
+        document.getElementById('prevBtn2').addEventListener('click', () => showStep(1));
+        document.getElementById('nextBtn2').addEventListener('click', () => showStep(3));
+        document.getElementById('prevBtn3').addEventListener('click', () => showStep(2));
+        document.getElementById('nextBtn3').addEventListener('click', () => showStep(4));
+        document.getElementById('prevBtn4').addEventListener('click', () => showStep(3));
+        document.getElementById('nextBtn4').addEventListener('click', () => showStep(5));
+        document.getElementById('prevBtn5').addEventListener('click', () => showStep(4));
+        document.getElementById('nextBtn5').addEventListener('click', () => showStep(6));
+        document.getElementById('prevBtn6').addEventListener('click', () => showStep(5));
+        document.getElementById('nextBtn6').addEventListener('click', () => showStep(7));
+        document.getElementById('prevBtn7').addEventListener('click', () => showStep(6));
+        
+        // Initialize
+        updateProgress();
+    </script>
+</body>
+</html>
